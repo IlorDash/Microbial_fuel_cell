@@ -2,8 +2,8 @@
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 I2C1.IPParameters=Timing,Speed
-I2C1.Speed=50
-I2C1.Timing=0x202029A8
+I2C1.Speed=10
+I2C1.Timing=0x6010C7FF
 KeepUserPlacement=false
 Mcu.Family=STM32L0
 Mcu.IP0=I2C1

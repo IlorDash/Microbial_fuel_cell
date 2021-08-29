@@ -58,7 +58,8 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+static const uint8_t SCD30_ADDR = 0x61 << 1; // Use 8-bit address
+static const uint8_t REG_TEMP = 0x00;
 /* USER CODE END 0 */
 
 /**
@@ -67,7 +68,6 @@ static void MX_SPI1_Init(void);
  */
 int main(void) {
 	/* USER CODE BEGIN 1 */
-
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
@@ -91,16 +91,19 @@ int main(void) {
 	MX_I2C1_Init();
 	MX_SPI1_Init();
 	/* USER CODE BEGIN 2 */
+	//HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET);      //turn on the load
+	scd30.initialize(hi2c1);
 
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
+		float result[3] = {0};
 		/* USER CODE END WHILE */
-		HAL_GPIO_WritePin(LORA_NSS_GPIO_Port, LORA_NSS_Pin, GPIO_PIN_SET);
-		HAL_Delay(1000);
-		HAL_GPIO_WritePin(LORA_NSS_GPIO_Port, LORA_NSS_Pin, GPIO_PIN_RESET);
+		if (scd30.isAvailable()) {
+			scd30.getCarbonDioxideConcentration(result);
+		}
 		HAL_Delay(2000);
 		/* USER CODE BEGIN 3 */
 	}
@@ -165,7 +168,7 @@ static void MX_I2C1_Init(void) {
 
 	/* USER CODE END I2C1_Init 1 */
 	hi2c1.Instance = I2C1;
-	hi2c1.Init.Timing = 0x202029A8;
+	hi2c1.Init.Timing = 0x6010C7FF;
 	hi2c1.Init.OwnAddress1 = 0;
 	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;

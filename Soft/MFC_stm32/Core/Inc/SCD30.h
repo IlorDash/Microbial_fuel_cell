@@ -28,8 +28,8 @@
 */
 #pragma once
 
-#include "I2Cdev.h"
 #include "stm32l0xx_hal.h"
+#include <cstring>
 
 #ifndef __SENSIRION_SCD30_H__
 #define __SENSIRION_SCD30_H__
