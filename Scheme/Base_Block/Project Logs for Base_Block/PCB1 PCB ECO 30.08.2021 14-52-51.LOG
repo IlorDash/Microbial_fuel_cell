@@ -1,0 +1,14 @@
+Added Component: Designator=IC?(SOIC127P790X216-8N)
+Add component (AddParameter): Name = "Arrow Part Number"; Value = "MX25L6406EM2I-12G"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Arrow Price/Stock"; Value = "https://www.arrow.com/en/products/mx25l6406em2i-12g/macronix-international?region=nac"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Datasheet Link"; Value = "https://www.arrow.com/en/products/mx25l6406em2i-12g/macronix-international"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Height"; Value = "2.16mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Name"; Value = "Macronix"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Part_Number"; Value = "MX25L6406EM2I-12G"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Part Number"; Value = ""; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Price/Stock"; Value = ""; VariantName = "[No Variations]"
+Added Pin To Net: NetName=3V3 Pin=IC?-8
+Added Member To Class: ClassName=Sheet2 Member=Component IC? MX25L6406EM2I-12G
+Added Member To Class: ClassName=Sheet2 Member=Component R? 33
+Added Member To Class: ClassName=Sheet2 Member=Component R? 33
+Added Member To Class: ClassName=Sheet2 Member=Component R? 33
