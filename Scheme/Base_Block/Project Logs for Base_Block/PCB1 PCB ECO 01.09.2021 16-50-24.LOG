@@ -1,0 +1,61 @@
+Removed Pin From Net: NetName=3V3 Pin=C9-2
+Removed Pin From Net: NetName=3V3 Pin=C10-2
+Removed Pin From Net: NetName=3V3 Pin=C12-2
+Removed Pin From Net: NetName=3V3 Pin=C13-2
+Removed Pin From Net: NetName=3V3 Pin=C14-2
+Change Component Designator: OldDesignator=IC? NewDesignator=DD?
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM1885C1H220FA01J"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "22pF"; VariantName = "[No Variations]"
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM1885C1H220FA01J"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "22pF"; VariantName = "[No Variations]"
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM188R72A104MA35-01.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM188R72A104MA35D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Added Component: Designator=ZQ?(DT-38T)
+Added Pin To Net: NetName=VBAT Pin=C13-2
+Added Pin To Net: NetName=GND Pin=C?-1
+Added Pin To Net: NetName=GND Pin=C?-1
+Added Pin To Net: NetName=3V3 Pin=C?-2
+Added Pin To Net: NetName=GND Pin=C?-2
+Added Pin To Net: NetName=GND Pin=DD?-2
+Added Pin To Net: NetName=GND Pin=DD?-3
+Added Pin To Net: NetName=GND Pin=DD?-4
+Added Pin To Net: NetName=3V3 Pin=DD?-8
+Added Pin To Net: NetName=EEPROM_SCL Pin=DD?-6
+Added Net: Name=EEPROM_SCL
+Added Pin To Net: NetName=EEPROM_SDA Pin=DD?-5
+Added Net: Name=EEPROM_SDA
+Added Pin To Net: NetName=EEPROM_WP Pin=DD?-7
+Added Net: Name=EEPROM_WP
+Added Pin To Net: NetName=NetC9_2 Pin=C9-2
+Added Pin To Net: NetName=NetC9_2 Pin=C10-2
+Added Pin To Net: NetName=NetC9_2 Pin=C12-2
+Added Pin To Net: NetName=NetC9_2 Pin=C14-2
+Added Net: Name=NetC9_2
+Added Pin To Net: NetName=NetC?_1 Pin=C?-1
+Added Pin To Net: NetName=NetC?_1 Pin=DD2-3
+Added Pin To Net: NetName=NetC?_1 Pin=ZQ?-2
+Added Net: Name=NetC?_1
+Added Pin To Net: NetName=NetC?_2 Pin=C?-2
+Added Pin To Net: NetName=NetC?_2 Pin=DD2-4
+Added Pin To Net: NetName=NetC?_2 Pin=ZQ?-1
+Added Net: Name=NetC?_2
+Added Member To Class: ClassName=Sheet2 Member=Component C? 22
+Added Member To Class: ClassName=Sheet2 Member=Component C? 22
+Added Member To Class: ClassName=Sheet2 Member=Component C? 0,1 ìê
+Added Member To Class: ClassName=Sheet2 Member=Component ZQ? 32768 Ãö
+Added Room: Name=Sheet2

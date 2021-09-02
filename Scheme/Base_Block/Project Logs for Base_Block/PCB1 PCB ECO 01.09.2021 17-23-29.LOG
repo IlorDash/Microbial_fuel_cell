@@ -1,0 +1,28 @@
+Removed Pin From Net: NetName=RD1_P Pin=C16-1
+Removed Pin From Net: NetName=RD_P Pin=C16-2
+Removed Pin From Net: NetName=RD1_N Pin=C19-1
+Removed Pin From Net: NetName=RD_N Pin=C19-2
+Removed Member From Class: ClassName=Sheet2 Member=C16
+Removed Member From Class: ClassName=Sheet2 Member=C19
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM1885C1H682JA01D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "6800pF"; VariantName = "[No Variations]"
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM1885C1H682JA01D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "6800pF"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=RD_N Pin=C?-1
+Added Pin To Net: NetName=RD_P Pin=C?-1
+Added Pin To Net: NetName=RD1_N Pin=C?-2
+Added Pin To Net: NetName=RD1_P Pin=C?-2
+Added Member To Class: ClassName=Sheet2 Member=Component C? 22
+Added Member To Class: ClassName=Sheet2 Member=Component C? 6800
+Added Member To Class: ClassName=Sheet2 Member=Component C? 6800
+Added Member To Class: ClassName=Sheet2 Member=Component C? 0,1 לך

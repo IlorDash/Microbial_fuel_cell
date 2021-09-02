@@ -1,0 +1,102 @@
+Removed Pin From Net: NetName=GND Pin=C4-1
+Removed Pin From Net: NetName=3V3 Pin=C4-2
+Removed Pin From Net: NetName=GND Pin=C17-2
+Removed Pin From Net: NetName=NetC20_2 Pin=C20-2
+Removed Pin From Net: NetName=NetC18_1 Pin=DD1-22
+Change Component Footprint: Designator=C4 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C5 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C6 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C7 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C8 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C15 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C17 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C18 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Footprint: Designator=C20 Old Footprint=C_0805 New Footprint=C_0603
+Change Component Comment : Designator=C18 Old Comment=0.01 New Comment=2,2 ìê
+Change Component Comment : Designator=C20 Old Comment=0.01 New Comment=10000
+Change Component Comment : Designator=C15 Old Comment=0.022 New Comment=0,1 ìê
+Change Component Comment : Designator=C17 Old Comment=4,7ìê New Comment=0.022
+Change component parameters: Designator = "C4" ("C4"); Footprint = "C_0805"; UniqueID = "\TDOFVLVG" ("\TDOFVLVG")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C5" ("C5"); Footprint = "C_0805"; UniqueID = "\NKYFYYHF" ("\NKYFYYHF")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C6" ("C6"); Footprint = "C_0805"; UniqueID = "\PQTWAJZP" ("\PQTWAJZP")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C7" ("C7"); Footprint = "C_0805"; UniqueID = "\QZXVOMGA" ("\QZXVOMGA")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C8" ("C8"); Footprint = "C_0805"; UniqueID = "\KEXXOSNO" ("\KEXXOSNO")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C15" ("C15"); Footprint = "C_0805"; UniqueID = "\EGIXELHP" ("\EGIXELHP")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R72A104KA35D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C17" ("C17"); Footprint = "C_0805"; UniqueID = "\FZLKXCHN" ("\FZLKXCHN")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM1885C1H103JA01D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "10000pF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C18" ("C18"); Footprint = "C_0805"; UniqueID = "\SLKIJVCO" ("\SLKIJVCO")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM188R71A225ME15D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "2.2µF"; VariantName = "[No Variations]"
+Change component parameters: Designator = "C20" ("C20"); Footprint = "C_0805"; UniqueID = "\VCIHBHXD" ("\VCIHBHXD")
+Change component parameters (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "GRM1885C1H103JA01D"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Value"; Value = "10000pF"; VariantName = "[No Variations]"
+Added Component: Designator=C24(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.murata.com/~/media/webrenewal/support/library/catalog/products/capacitor/mlcc/c02e.ashx?la=en-us"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM1885C1H103JA01D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "10000pF"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=3V3 Pin=C15-2
+Added Pin To Net: NetName=GND Pin=C17-1
+Added Pin To Net: NetName=GND Pin=C24-1
+Added Pin To Net: NetName=NetC20_2 Pin=C24-2
+Added Pin To Net: NetName=NetC18_1 Pin=DD1-20
+Change Net Name : Old Net Name=NetC20_2 New Net Name=NetC24_2
+Added Pin To Net: NetName=NetC17_2 Pin=C17-2
+Added Pin To Net: NetName=NetC17_2 Pin=R8-1
+Added Pin To Net: NetName=NetC17_2 Pin=XS1-3
+Added Net: Name=NetC17_2
+Added Pin To Net: NetName=NetC20_2 Pin=C20-2
+Added Pin To Net: NetName=NetC20_2 Pin=DD1-22
+Added Net: Name=NetC20_2
+Added Member To Class: ClassName=Sheet2 Member=Component C24 10000
