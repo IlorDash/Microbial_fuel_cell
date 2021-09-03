@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "SCD30.h"
+#include "SX1278.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -60,6 +61,13 @@ static void MX_SPI1_Init(void);
 /* USER CODE BEGIN 0 */
 static const uint8_t SCD30_ADDR = 0x61 << 1; // Use 8-bit address
 static const uint8_t REG_TEMP = 0x00;
+
+int i;
+char txBuff[32] = "Hello, your borther";
+char rxBuff[512];
+int loraStatus = 0;
+SX1278_t SX1278;
+uint8_t regData;
 /* USER CODE END 0 */
 
 /**
@@ -74,6 +82,8 @@ int main(void) {
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
+
+	/* System interrupt init*/
 
 	/* USER CODE BEGIN Init */
 
@@ -91,20 +101,38 @@ int main(void) {
 	MX_I2C1_Init();
 	MX_SPI1_Init();
 	/* USER CODE BEGIN 2 */
-	//HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET);      //turn on the load
+	// HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET);      //turn on the load
 	scd30.initialize(hi2c1);
 
-	/* USER CODE END 2 */
+	SX1278_hw_t SX1278_pins;
 
+	SX1278_pins.dio0.pin = LORA_DIO0_Pin;
+	SX1278_pins.dio0.port = LORA_DIO0_GPIO_Port;
+	SX1278_pins.nss.pin = LORA_NSS_Pin;
+	SX1278_pins.nss.port = LORA_NSS_GPIO_Port;
+	SX1278_pins.reset.pin = LORA_RST_Pin;
+	SX1278_pins.reset.port = LORA_RST_GPIO_Port;
+	SX1278_pins.spi = &hspi1;
+
+	SX1278.hw = &SX1278_pins;
+        
+	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+        
+        loraStatus = SX1278_LoRaEntryTx(&SX1278, 32, 2000);
+	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		float result[3] = {0};
+		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
+		//float result[3] = {0};
+                //regData = SX1278_SPIRead(&SX1278, 0x01);
 		/* USER CODE END WHILE */
-		if (scd30.isAvailable()) {
+		/*if (scd30.isAvailable()) {
 			scd30.getCarbonDioxideConcentration(result);
 		}
-		HAL_Delay(2000);
+                HAL_Delay(2000);*/
+		HAL_Delay(1000);
+                
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */

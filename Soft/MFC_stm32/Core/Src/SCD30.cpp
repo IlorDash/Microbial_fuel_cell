@@ -34,41 +34,13 @@ SCD30::SCD30(void) {
 }
 
 void SCD30::initialize(I2C_HandleTypeDef _hi2c) {
-	// Set temperature offset。
-	// setTemperatureOffset(0);
 	hi2c = _hi2c;
-	setMeasurementInterval(2);	// 2 seconds between measurements
-	startPeriodicMeasurement(); // start periodic measuments
-
-	// setAutoSelfCalibration(true); // Enable auto-self-calibration
-}
-
-void SCD30::setTemperatureOffset(uint16_t offset) {
-	writeCommandWithArguments(SCD30_SET_TEMP_OFFSET, offset);
+	writeCommandWithArguments(SCD30_SET_MEASUREMENT_INTERVAL, 2);	// 2 seconds between measurements
+	writeCommandWithArguments(SCD30_CONTINUOUS_MEASUREMENT, 0x0000);
 }
 
 bool SCD30::isAvailable(void) {
 	return readRegister(SCD30_GET_DATA_READY);
-}
-
-void SCD30::setAutoSelfCalibration(bool enable) {
-	if (enable) {
-		writeCommandWithArguments(SCD30_AUTOMATIC_SELF_CALIBRATION, 1); // Activate continuous ASC
-	} else {
-		writeCommandWithArguments(SCD30_AUTOMATIC_SELF_CALIBRATION, 0); // Deactivate continuous ASC
-	}
-}
-
-void SCD30::setMeasurementInterval(uint16_t interval) {
-	writeCommandWithArguments(SCD30_SET_MEASUREMENT_INTERVAL, interval);
-}
-
-void SCD30::startPeriodicMeasurement(void) {
-	writeCommandWithArguments(SCD30_CONTINUOUS_MEASUREMENT, 0x0000);
-}
-
-void SCD30::stopMeasurement(void) {
-	writeCommand(SCD30_STOP_MEASUREMENT);
 }
 
 void SCD30::getCarbonDioxideConcentration(float *result) {
@@ -99,10 +71,6 @@ void SCD30::writeCommand(uint16_t command) {
 	uint8_t buf[2];
 	buf[0] = command >> 8;
 	buf[1] = command & 0xff;
-	// Wire.beginTransmission(devAddr);
-	// Wire.write(command >> 8); // MSB
-	// Wire.write(command & 0xff); // LSB
-	// Wire.endTransmission();
 	HAL_I2C_Master_Transmit(&hi2c, devAddr, buf, sizeof(buf), 1000);
 }
 
@@ -129,20 +97,10 @@ uint16_t SCD30::readRegister(uint16_t address) {
 }
 
 void SCD30::writeBuffer(uint8_t *data, uint8_t len) {
-
-	// Wire.beginTransmission(devAddr);
-	// Wire.write(data, len);
-	// Wire.endTransmission();
 	HAL_I2C_Master_Transmit(&hi2c, devAddr, data, len, 1000);
 }
 
 void SCD30::readBuffer(uint8_t *data, uint8_t len) {
-	// uint8_t i = 0;
-
-	// Wire.requestFrom(devAddr, len);
-	// while (Wire.available()) {
-	//     data[i ++] = Wire.read();
-	// }
 	HAL_I2C_Master_Receive(&hi2c, devAddr, data, len, 1000);
 }
 

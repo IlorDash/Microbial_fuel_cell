@@ -61,13 +61,6 @@ class SCD30 {
 
     bool isAvailable(void);
 
-    void setAutoSelfCalibration(bool enable);
-    void setMeasurementInterval(uint16_t interval);
-
-    void startPeriodicMeasurement(void);
-    void stopMeasurement(void);
-    void setTemperatureOffset(uint16_t offset);
-
     void getCarbonDioxideConcentration(float* result);
   private:
 
