@@ -54,20 +54,52 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
-
+char *IntToStr(int n) {
+	char str1[10], str2[10], t;
+	int i, k;
+	int sign = 0;
+	i = 0;
+	k = n;
+	if (k < 0) {
+		sign = 1;
+		k = -k;
+	}
+	do {
+		t = k % 10;
+		k = k / 10;
+		str1[i] = t | 0x30;
+		i++;
+	} while (k > 0);
+	if (sign == 1) {
+		str1[i] = '-';
+		i++;
+	}
+	k = 0;
+	i--;
+	while (i >= 0) {
+		str2[k] = str1[i];
+		i--;
+		k++;
+	}
+	str2[k] = '\0';
+	return (str2);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static const uint8_t SCD30_ADDR = 0x61 << 1; // Use 8-bit address
-static const uint8_t REG_TEMP = 0x00;
-
 int i;
-char txBuff[32] = "Hello, your borther";
-char rxBuff[512];
 int loraStatus = 0;
 SX1278_t SX1278;
 uint8_t regData;
+
+struct airData {
+	uint16_t co2;
+	int16_t temp;
+	uint8_t humid;
+};
+
+airData currentMeas;
 /* USER CODE END 0 */
 
 /**
@@ -115,24 +147,30 @@ int main(void) {
 	SX1278_pins.spi = &hspi1;
 
 	SX1278.hw = &SX1278_pins;
-        
+
 	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
-        
-        loraStatus = SX1278_LoRaEntryTx(&SX1278, 32, 2000);
+
+	loraStatus = SX1278_LoRaEntryTx(&SX1278, 32, 2000);
 	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-		//float result[3] = {0};
-                //regData = SX1278_SPIRead(&SX1278, 0x01);
+		float result[3] = {0};
 		/* USER CODE END WHILE */
-		/*if (scd30.isAvailable()) {
-			scd30.getCarbonDioxideConcentration(result);
+		if (scd30.isAvailable()) {
+                        char txBuff[16] = "";
+			scd30.getCarbonDioxideConcentration(result); //
+			currentMeas.co2 = (uint16_t)result[0];
+			currentMeas.temp = (int16_t)(result[1] * 10);
+			currentMeas.humid = (int8_t)result[2];
+			strcat(txBuff, IntToStr(currentMeas.co2));
+			//txBuff = IntToStr(currentMeas.co2);
+			strcat(txBuff, IntToStr(currentMeas.temp));
+			strcat(txBuff, IntToStr(currentMeas.humid));
+			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
 		}
-                HAL_Delay(2000);*/
-		HAL_Delay(1000);
-                
+		HAL_Delay(2000);
+
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
