@@ -11,8 +11,6 @@
 #ifndef __SX1278_H__
 #define __SX1278_H__
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <main.h>
 
 #define SX1278_MAX_PACKET 256
