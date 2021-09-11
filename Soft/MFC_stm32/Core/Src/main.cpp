@@ -178,9 +178,9 @@ int main(void) {
 		}
 
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET); // turn off the load
-		HAL_Delay(5000);
+		HAL_Delay(5000);	//wait between enabling
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-
+		HAL_Delay(2000);	// wait for scd 30 waking up
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
