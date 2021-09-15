@@ -7,7 +7,6 @@
  */
 
 #include "SX1278.h"
-#include <string.h>
 
 //////////////////////////////////
 // logic
