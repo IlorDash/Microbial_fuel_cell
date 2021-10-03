@@ -58,6 +58,40 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LORA_RST_Pin GPIO_PIN_3
+#define LORA_RST_GPIO_Port GPIOA
+#define LORA_NSS_Pin GPIO_PIN_4
+#define LORA_NSS_GPIO_Port GPIOA
+#define LORA_SCK_Pin GPIO_PIN_5
+#define LORA_SCK_GPIO_Port GPIOA
+#define LORA_MISO_Pin GPIO_PIN_6
+#define LORA_MISO_GPIO_Port GPIOA
+#define LORA_MOSI_Pin GPIO_PIN_7
+#define LORA_MOSI_GPIO_Port GPIOA
+#define LORA_DIO0_Pin GPIO_PIN_0
+#define LORA_DIO0_GPIO_Port GPIOB
+#define ET_INTn_Pin GPIO_PIN_12
+#define ET_INTn_GPIO_Port GPIOB
+#define ET_SCK_Pin GPIO_PIN_13
+#define ET_SCK_GPIO_Port GPIOB
+#define ET_MISO_Pin GPIO_PIN_14
+#define ET_MISO_GPIO_Port GPIOB
+#define ET_MOSI_Pin GPIO_PIN_15
+#define ET_MOSI_GPIO_Port GPIOB
+#define ET_SCSn_Pin GPIO_PIN_8
+#define ET_SCSn_GPIO_Port GPIOA
+#define ET_RSTn_Pin GPIO_PIN_11
+#define ET_RSTn_GPIO_Port GPIOA
+#define LORA_TX_Pin GPIO_PIN_3
+#define LORA_TX_GPIO_Port GPIOB
+#define ERROR_Pin GPIO_PIN_4
+#define ERROR_GPIO_Port GPIOB
+#define STM_READY_Pin GPIO_PIN_5
+#define STM_READY_GPIO_Port GPIOB
+#define EEPROM_SCL_Pin GPIO_PIN_6
+#define EEPROM_SCL_GPIO_Port GPIOB
+#define EEPROM_SDA_Pin GPIO_PIN_7
+#define EEPROM_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

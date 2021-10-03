@@ -4,8 +4,8 @@
         {
             "name": "IAR",
             "defines": [
-                "STM32L010x4=",
                 "USE_HAL_DRIVER=",
+                "STM32F103xB=",
                 "__CHAR_BITS__=8",
                 "__CHAR_MAX__=0xff",
                 "__CHAR_MIN__=0",
@@ -404,11 +404,11 @@
                 "__weak="
             ],
             "includePath": [
-                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_stm32\\Core\\Inc",
-                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_stm32\\Drivers\\STM32L0xx_HAL_Driver\\Inc",
-                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_stm32\\Drivers\\CMSIS\\Device\\ST\\STM32L0xx\\Include",
-                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_stm32\\Drivers\\CMSIS\\Include",
-                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_stm32\\Drivers\\STM32L0xx_HAL_Driver\\Inc\\Legacy",
+                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_Base_block_stm32\\Core\\Inc",
+                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_Base_block_stm32\\Drivers\\STM32F1xx_HAL_Driver\\Inc",
+                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_Base_block_stm32\\Drivers\\STM32F1xx_HAL_Driver\\Inc\\Legacy",
+                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_Base_block_stm32\\Drivers\\CMSIS\\Device\\ST\\STM32F1xx\\Include",
+                "c:\\Users\\Ilya\\Documents\\Projects\\STM32\\Microbial_fuel_cell\\Soft\\MFC_Base_block_stm32\\Drivers\\CMSIS\\Include",
                 "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.4\\arm\\inc",
                 "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.4\\arm\\inc\\c",
                 "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench 8.4\\arm\\inc\\cpp"
