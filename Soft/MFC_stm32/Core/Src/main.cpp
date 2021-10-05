@@ -319,17 +319,23 @@ static void MX_GPIO_Init(void) {
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, LORA_NSS_Pin | LORA_RST_Pin | LORA_DIO0_Pin | LORA_DIO1_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA, LORA_NSS_Pin | LORA_RST_Pin | LORA_DIO0_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET);
 
-	/*Configure GPIO pins : LORA_NSS_Pin LORA_RST_Pin LORA_DIO0_Pin LORA_DIO1_Pin */
-	GPIO_InitStruct.Pin = LORA_NSS_Pin | LORA_RST_Pin | LORA_DIO0_Pin | LORA_DIO1_Pin;
+	/*Configure GPIO pins : LORA_NSS_Pin LORA_RST_Pin LORA_DIO0_Pin */
+	GPIO_InitStruct.Pin = LORA_NSS_Pin | LORA_RST_Pin | LORA_DIO0_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : POWER_GOOD_Pin */
+	GPIO_InitStruct.Pin = POWER_GOOD_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(POWER_GOOD_GPIO_Port, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : LOAD_SW_Pin */
 	GPIO_InitStruct.Pin = LOAD_SW_Pin;
