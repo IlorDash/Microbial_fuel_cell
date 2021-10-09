@@ -166,22 +166,26 @@ int main(void) {
 		float result[3] = {0};
 		/* USER CODE END WHILE */
 		if (scd30.isAvailable()) {
-			char txBuff[16] = "";
+			char txBuff[15] = "";
 			scd30.getCarbonDioxideConcentration(result); //
 			currentMeas.co2 = (uint16_t)result[0];
 			currentMeas.temp = (int16_t)(result[1] * 10);
 			currentMeas.humid = (int8_t)result[2];
-			strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
+
+			txBuff[0] = 's';
+			strcat(txBuff, IntToStr(currentMeas.co2, 5, false));
 			strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
 			strcat(txBuff, IntToStr(currentMeas.humid, 3, false));
+			txBuff[13] = 'f';
+
 			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
 		}
 
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET); // turn off the load
-		HAL_Delay(5000);	//wait between enabling
-		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-		HAL_Delay(2000);	// wait for scd 30 waking up
-		/* USER CODE BEGIN 3 */
+		HAL_Delay(5000);												   // wait between enabling
+		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET);   // turn on the load
+		HAL_Delay(2000);												   // wait for scd 30 waking up
+																		   /* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
 }

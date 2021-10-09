@@ -37,6 +37,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define START_MARK 's'
+#define FINISH_MARK 'f'
+
+#define CO2_LENGTH 5
+#define TEMP_LENGTH 5
+#define HUMID_LENGTH 3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,6 +52,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+
+RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -63,17 +71,53 @@ static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+bool parseMeas(char buff[], uint8_t len, char _co2[], char _temp[], char _humid[]) {
+	int pos = 0;
+	while (buff[pos] != START_MARK) {
+		pos++;
+	}
+	if ((buff[pos] != START_MARK) || (buff[pos + CO2_LENGTH + TEMP_LENGTH + HUMID_LENGTH + 1] != FINISH_MARK)) {
+		return false;
+	}
+	buff += pos + 1;
+	strncpy(_co2, buff, CO2_LENGTH);
+	strncpy(_temp, buff + CO2_LENGTH, TEMP_LENGTH);
+	strncpy(_humid, buff + CO2_LENGTH + TEMP_LENGTH, HUMID_LENGTH);
+	return true;
+}
+
+typedef struct {
+	uint8_t Hour;
+
+	uint8_t Month;
+	uint8_t Date;
+	uint8_t Year;
+
+} dateTypeDef;
+
+struct {
+	uint16_t measNum = 0;
+
+	dateTypeDef date = {0}; // measNum(5) + hour(3) + date(3) + month(3) + year(3) + co2(5) + temp(5, with sign) + humid(3) = 30 bytes in string
+
+	char co2[CO2_LENGTH + 1] = {0};
+	char temp[TEMP_LENGTH + 1] = {0};
+	char humid[HUMID_LENGTH + 1] = {0};
+} dataFrame;
+
 int i;
 int loraStatus = 0;
 SX1278_t SX1278;
 uint8_t regData;
-char txBuff[16] = "";
+char LoRaRxBuff[32] = "";
+char txBuff[64] = "";
 
 char txBuffEEPROM[25] = "";
 char rxBuffEEPROM[25] = "";
@@ -110,6 +154,7 @@ int main(void) {
 	MX_SPI2_Init();
 	MX_USART1_UART_Init();
 	MX_I2C1_Init();
+	MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
 	SX1278_hw_t SX1278_pins;
 
@@ -122,17 +167,17 @@ int main(void) {
 	SX1278_pins.spi = &hspi1;
 
 	SX1278.hw = &SX1278_pins;
-	uint8_t testReg = 0;
-	testReg = SX1278_SPIRead(&SX1278, LR_RegOpMode);
 
-	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 
-	loraStatus = SX1278_LoRaEntryTx(&SX1278, 32, 2000);
-	testReg = SX1278_SPIRead(&SX1278, LR_RegOpMode);
+	loraStatus = SX1278_LoRaEntryRx(&SX1278, 32, 2000);
+	HAL_Delay(100);
+
+	// HAL_RTC_SetDate()
 
 	extEEPROM_init(&hi2c1);
 	sprintf(txBuffEEPROM, "Hello from EEPROM!");
-	extEEPROM_write(0, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
+	// extEEPROM_write(0, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
 	extEEPROM_read(0, rxBuffEEPROM, 20, 1000);
 	sprintf(txBuff, "%s from 0 adress\r\n", rxBuffEEPROM);
 	HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
@@ -140,27 +185,41 @@ int main(void) {
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	int iter = 0;
 	while (1) {
 		/* USER CODE END WHILE */
-		HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_SET);
-		HAL_Delay(1000);
-		HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_RESET);
-		HAL_Delay(2000);
-		iter++;
 
-		sprintf(txBuffEEPROM, "Hello from EEPROM %d", iter);
-		extEEPROM_write(iter, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
-		extEEPROM_read(iter, rxBuffEEPROM, 20, 1000);
-		sprintf(txBuff, "%s from %d adress\r\n", rxBuffEEPROM, iter);
-		HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
+		loraStatus = SX1278_LoRaRxPacket(&SX1278);
+		if (loraStatus > 0) {
+			RTC_TimeTypeDef sTime = {0};
+			RTC_DateTypeDef DateToUpdate = {0};
 
-		sprintf(txBuffEEPROM, "Hello from EEPROM %d", iter - 1);
-		extEEPROM_write(iter - 1, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
-		extEEPROM_read(iter - 1, rxBuffEEPROM, 20, 1000);
-		sprintf(txBuff, "After write: %s from %d adress\r\n", rxBuffEEPROM, iter - 1);
-		HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
-		// loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
+			HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
+			HAL_RTC_GetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BIN);
+
+			dataFrame.date.Date = DateToUpdate.Date;
+			dataFrame.date.Month = DateToUpdate.Month;
+			dataFrame.date.Year = DateToUpdate.Year;
+			dataFrame.date.Hour = sTime.Hours;
+
+			dataFrame.measNum++;
+
+			SX1278_read(&SX1278, (uint8_t *)LoRaRxBuff, loraStatus);
+
+			bool parseResult = parseMeas(LoRaRxBuff, strlen(LoRaRxBuff), dataFrame.co2, dataFrame.temp, dataFrame.humid);
+			if (parseResult) {
+				sprintf(txBuff, "#%d H:%d D:%02d M:%02d Y:%04d CO2:%s TEMP:%s HUMID:%s\r\n", dataFrame.measNum, dataFrame.date.Hour, dataFrame.date.Date,
+						dataFrame.date.Month, dataFrame.date.Year, dataFrame.co2, dataFrame.temp, dataFrame.humid);
+				HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
+			}
+
+			HAL_Delay(500);
+		}
+
+		// sprintf(txBuffEEPROM, "Hello from EEPROM %d", iter - 1);
+		// extEEPROM_write(iter - 1, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
+		// extEEPROM_read(iter - 1, rxBuffEEPROM, 20, 1000);
+		// sprintf(txBuff, "After write: %s from %d adress\r\n", rxBuffEEPROM, iter - 1);
+		// HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
@@ -173,13 +232,15 @@ int main(void) {
 void SystemClock_Config(void) {
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.LSIState = RCC_LSI_ON;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
@@ -193,6 +254,11 @@ void SystemClock_Config(void) {
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
 	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
+		Error_Handler();
+	}
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+	PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
 		Error_Handler();
 	}
 }
@@ -226,6 +292,58 @@ static void MX_I2C1_Init(void) {
 	/* USER CODE BEGIN I2C1_Init 2 */
 
 	/* USER CODE END I2C1_Init 2 */
+}
+
+/**
+ * @brief RTC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_RTC_Init(void) {
+
+	/* USER CODE BEGIN RTC_Init 0 */
+
+	/* USER CODE END RTC_Init 0 */
+
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef DateToUpdate = {0};
+
+	/* USER CODE BEGIN RTC_Init 1 */
+
+	/* USER CODE END RTC_Init 1 */
+	/** Initialize RTC Only
+	 */
+	hrtc.Instance = RTC;
+	hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
+	hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
+	if (HAL_RTC_Init(&hrtc) != HAL_OK) {
+		Error_Handler();
+	}
+
+	/* USER CODE BEGIN Check_RTC_BKUP */
+
+	/* USER CODE END Check_RTC_BKUP */
+
+	/** Initialize RTC and set the Time and Date
+	 */
+	sTime.Hours = 10;
+	sTime.Minutes = 34;
+	sTime.Seconds = 0;
+
+	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
+	}
+	DateToUpdate.WeekDay = RTC_WEEKDAY_WEDNESDAY;
+	DateToUpdate.Month = RTC_MONTH_OCTOBER;
+	DateToUpdate.Date = 6;
+	DateToUpdate.Year = 0;
+
+	if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
+	}
+	/* USER CODE BEGIN RTC_Init 2 */
+
+	/* USER CODE END RTC_Init 2 */
 }
 
 /**
@@ -346,7 +464,7 @@ static void MX_GPIO_Init(void) {
 	HAL_GPIO_WritePin(GPIOA, LORA_RST_Pin | LORA_NSS_Pin | ET_SCSn_Pin | ET_RSTn_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, LORA_DIO0_Pin | ET_INTn_Pin | LORA_TX_Pin | ERROR_Pin | STM_READY_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, ET_INTn_Pin | LORA_TX_Pin | ERROR_Pin | STM_READY_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pins : LORA_RST_Pin LORA_NSS_Pin ET_SCSn_Pin ET_RSTn_Pin */
 	GPIO_InitStruct.Pin = LORA_RST_Pin | LORA_NSS_Pin | ET_SCSn_Pin | ET_RSTn_Pin;
@@ -355,9 +473,14 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : LORA_DIO0_Pin ET_INTn_Pin LORA_TX_Pin ERROR_Pin
-							 STM_READY_Pin */
-	GPIO_InitStruct.Pin = LORA_DIO0_Pin | ET_INTn_Pin | LORA_TX_Pin | ERROR_Pin | STM_READY_Pin;
+	/*Configure GPIO pin : LORA_DIO0_Pin */
+	GPIO_InitStruct.Pin = LORA_DIO0_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(LORA_DIO0_GPIO_Port, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : ET_INTn_Pin LORA_TX_Pin ERROR_Pin STM_READY_Pin */
+	GPIO_InitStruct.Pin = ET_INTn_Pin | LORA_TX_Pin | ERROR_Pin | STM_READY_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
