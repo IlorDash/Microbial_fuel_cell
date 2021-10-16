@@ -40,9 +40,12 @@
 #define START_MARK 's'
 #define FINISH_MARK 'f'
 
-#define CO2_LENGTH 5
+#define CO2_LENGTH 6
 #define TEMP_LENGTH 5
-#define HUMID_LENGTH 3
+#define HUMID_LENGTH 4
+
+#define MEAS_TX_BUFF_LENGTH 17
+#define DATA_FRAME_LENGTH 32
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -112,15 +115,22 @@ struct {
 	char humid[HUMID_LENGTH + 1] = {0};
 } dataFrame;
 
+struct {
+	uint8_t curDataFrameNum = 0;
+	uint16_t curPageNum = 0;
+
+	char txBuff[PAGE_SIZE] = ""; // size is equal to page size, because reading from EEPROM by one page
+	char rxBuff[30] = "";		 // size is equal to data frame size
+} EEPROM_struct;
+
 int i;
 int loraStatus = 0;
 SX1278_t SX1278;
-uint8_t regData;
 char LoRaRxBuff[32] = "";
-char txBuff[64] = "";
+char LoRaTxBuff[32] = "";
 
-char txBuffEEPROM[25] = "";
-char rxBuffEEPROM[25] = "";
+char UartTxBuff[64] = "";
+char UartRxBuff[32] = "";
 /* USER CODE END 0 */
 
 /**
@@ -170,25 +180,20 @@ int main(void) {
 
 	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 
-	loraStatus = SX1278_LoRaEntryRx(&SX1278, 32, 2000);
+	loraStatus = SX1278_LoRaEntryRx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
 	HAL_Delay(100);
 
-	// HAL_RTC_SetDate()
+	//*************************************
+	// HAL_RTC_SetDate()		//write func to set actual time via UART
+	//*************************************
 
-	extEEPROM_init(&hi2c1);
-	sprintf(txBuffEEPROM, "Hello from EEPROM!");
-	// extEEPROM_write(0, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
-	extEEPROM_read(0, rxBuffEEPROM, 20, 1000);
-	sprintf(txBuff, "%s from 0 adress\r\n", rxBuffEEPROM);
-	HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
 	/* USER CODE END 2 */
-
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
-
 		loraStatus = SX1278_LoRaRxPacket(&SX1278);
+
 		if (loraStatus > 0) {
 			RTC_TimeTypeDef sTime = {0};
 			RTC_DateTypeDef DateToUpdate = {0};
@@ -207,19 +212,29 @@ int main(void) {
 
 			bool parseResult = parseMeas(LoRaRxBuff, strlen(LoRaRxBuff), dataFrame.co2, dataFrame.temp, dataFrame.humid);
 			if (parseResult) {
-				sprintf(txBuff, "#%d H:%d D:%02d M:%02d Y:%04d CO2:%s TEMP:%s HUMID:%s\r\n", dataFrame.measNum, dataFrame.date.Hour, dataFrame.date.Date,
+				sprintf(UartTxBuff, "#%d H:%d D:%02d M:%02d Y:%04d CO2:%s TEMP:%s HUMID:%s\r\n", dataFrame.measNum, dataFrame.date.Hour, dataFrame.date.Date,
 						dataFrame.date.Month, dataFrame.date.Year, dataFrame.co2, dataFrame.temp, dataFrame.humid);
-				HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
-			}
+				HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
+				
+				sprintf(EEPROM_struct.txBuff + EEPROM_struct.curDataFrameNum * DATA_FRAME_LENGTH, "%-5d%-3d%-3d%-3d%-3d%s%s%s", dataFrame.measNum,
+						dataFrame.date.Date, dataFrame.date.Month, dataFrame.date.Year, dataFrame.date.Hour, dataFrame.co2, dataFrame.temp, dataFrame.humid);
+				EEPROM_struct.curDataFrameNum++;
+				if (EEPROM_struct.curPageNum == (PAGE_SIZE - 1)) {
 
+					bool writeResult = extEEPROM_writePage(EEPROM_struct.curPageNum, (uint8_t *)EEPROM_struct.txBuff, DEFAULT_NUM_ATTEMPTS);
+					if (!writeResult) {
+						sprintf(UartTxBuff, "Failed to write %d page", EEPROM_struct.curPageNum);
+						HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
+						while (1) {
+						}
+					}
+
+					EEPROM_struct.curPageNum++;
+				}
+			}
+			HAL_GPIO_WritePin(LORA_DIO0_GPIO_Port, LORA_DIO0_Pin, GPIO_PIN_RESET);
 			HAL_Delay(500);
 		}
-
-		// sprintf(txBuffEEPROM, "Hello from EEPROM %d", iter - 1);
-		// extEEPROM_write(iter - 1, txBuffEEPROM, strlen(txBuffEEPROM), 1000);
-		// extEEPROM_read(iter - 1, rxBuffEEPROM, 20, 1000);
-		// sprintf(txBuff, "After write: %s from %d adress\r\n", rxBuffEEPROM, iter - 1);
-		// HAL_UART_Transmit(&huart1, (uint8_t *)txBuff, strlen(txBuff), 1000);
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
@@ -237,23 +252,26 @@ void SystemClock_Config(void) {
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.LSIState = RCC_LSI_ON;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
 	 */
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
 		Error_Handler();
 	}
 	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
@@ -278,7 +296,7 @@ static void MX_I2C1_Init(void) {
 
 	/* USER CODE END I2C1_Init 1 */
 	hi2c1.Instance = I2C1;
-	hi2c1.Init.ClockSpeed = 100000;
+	hi2c1.Init.ClockSpeed = 400000;
 	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
 	hi2c1.Init.OwnAddress1 = 0;
 	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -368,7 +386,7 @@ static void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
