@@ -34,6 +34,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define STR_COMMON_LENGTH 10
+#define MEAS_TX_BUFF_LENGTH 17
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,30 +56,38 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
-char *IntToStr(int n, int space, bool setSign) {
+char *IntToStr(int n, int space, bool setSign)
+{
 	char str1[STR_COMMON_LENGTH] = {0}, str2[STR_COMMON_LENGTH] = {0}, t;
-	for (uint8_t i = 0; i < STR_COMMON_LENGTH; i++) {
+	for (uint8_t i = 0; i < STR_COMMON_LENGTH; i++)
+	{
 		str2[i] = ' ';
 	}
 	int i, k;
 	int sign = 0;
 	i = 0;
 	k = n;
-	if (k < 0) {
+	if (k < 0)
+	{
 		sign = 1;
 		k = -k;
 	}
-	do {
+	do
+	{
 		t = k % 10;
 		k = k / 10;
 		str1[i] = t | 0x30;
 		i++;
 	} while (k > 0);
-	if (setSign) {
-		if (sign == 1) {
+	if (setSign)
+	{
+		if (sign == 1)
+		{
 			str1[i] = '-';
 			i++;
-		} else {
+		}
+		else
+		{
 			str1[i] = '+';
 			i++;
 		}
@@ -86,7 +95,8 @@ char *IntToStr(int n, int space, bool setSign) {
 
 	k = 0;
 	i--;
-	while (i >= 0) {
+	while (i >= 0)
+	{
 		str2[k] = str1[i];
 		i--;
 		k++;
@@ -103,7 +113,8 @@ int loraStatus = 0;
 SX1278_t SX1278;
 uint8_t regData;
 
-struct {
+struct
+{
 	uint16_t co2;
 	int16_t temp;
 	uint8_t humid;
@@ -114,7 +125,8 @@ struct {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
 	/* USER CODE BEGIN 1 */
 	/* USER CODE END 1 */
 
@@ -158,25 +170,27 @@ int main(void) {
 
 	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_6, SX1278_LORA_BW_20_8KHZ, 10);
 
-	loraStatus = SX1278_LoRaEntryTx(&SX1278, 32, 2000);
 	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	while (1) {
+	while (1)
+	{
 		float result[3] = {0};
 		/* USER CODE END WHILE */
-		if (scd30.isAvailable()) {
-			char txBuff[15] = "";
+		if (scd30.isAvailable())
+		{
+			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+			char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
 			scd30.getCarbonDioxideConcentration(result); //
 			currentMeas.co2 = (uint16_t)result[0];
 			currentMeas.temp = (int16_t)(result[1] * 10);
 			currentMeas.humid = (int8_t)result[2];
 
 			txBuff[0] = 's';
-			strcat(txBuff, IntToStr(currentMeas.co2, 5, false));
+			strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
 			strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
-			strcat(txBuff, IntToStr(currentMeas.humid, 3, false));
-			txBuff[13] = 'f';
+			strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
+			txBuff[16] = 'f';
 
 			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
 		}
@@ -194,7 +208,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -212,7 +227,8 @@ void SystemClock_Config(void) {
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_4;
 	RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_2;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
@@ -223,12 +239,14 @@ void SystemClock_Config(void) {
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
 	PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+	{
 		Error_Handler();
 	}
 }
@@ -238,7 +256,8 @@ void SystemClock_Config(void) {
  * @param None
  * @retval None
  */
-static void MX_I2C1_Init(void) {
+static void MX_I2C1_Init(void)
+{
 
 	/* USER CODE BEGIN I2C1_Init 0 */
 
@@ -256,17 +275,20 @@ static void MX_I2C1_Init(void) {
 	hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
 	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
 	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	if (HAL_I2C_Init(&hi2c1) != HAL_OK) {
+	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	/** Configure Analogue filter
 	 */
-	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK) {
+	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	/** Configure Digital filter
 	 */
-	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) {
+	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	/* USER CODE BEGIN I2C1_Init 2 */
@@ -279,7 +301,8 @@ static void MX_I2C1_Init(void) {
  * @param None
  * @retval None
  */
-static void MX_SPI1_Init(void) {
+static void MX_SPI1_Init(void)
+{
 
 	/* USER CODE BEGIN SPI1_Init 0 */
 
@@ -301,7 +324,8 @@ static void MX_SPI1_Init(void) {
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 	hspi1.Init.CRCPolynomial = 7;
-	if (HAL_SPI_Init(&hspi1) != HAL_OK) {
+	if (HAL_SPI_Init(&hspi1) != HAL_OK)
+	{
 		Error_Handler();
 	}
 	/* USER CODE BEGIN SPI1_Init 2 */
@@ -314,7 +338,8 @@ static void MX_SPI1_Init(void) {
  * @param None
  * @retval None
  */
-static void MX_GPIO_Init(void) {
+static void MX_GPIO_Init(void)
+{
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	/* GPIO Ports Clock Enable */
@@ -357,11 +382,13 @@ static void MX_GPIO_Init(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
 	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
-	while (1) {
+	while (1)
+	{
 	}
 	/* USER CODE END Error_Handler_Debug */
 }
@@ -374,7 +401,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line) {
+void assert_failed(uint8_t *file, uint32_t line)
+{
 	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
 	   ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
