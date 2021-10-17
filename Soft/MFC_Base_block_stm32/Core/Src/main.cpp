@@ -105,23 +105,26 @@ typedef struct {
 
 } dateTypeDef;
 
-struct {
-	uint16_t measNum = 0;
+struct dataFrameStruct {
+	uint16_t measNum;
 
-	dateTypeDef date = {0}; // measNum(5) + hour(3) + date(3) + month(3) + year(3) + co2(5) + temp(5, with sign) + humid(3) = 30 bytes in string
+	dateTypeDef date; // measNum(5) + hour(3) + date(3) + month(3) + year(3) + co2(5) + temp(5, with sign) + humid(3) = 30 bytes in string
 
-	char co2[CO2_LENGTH + 1] = {0};
-	char temp[TEMP_LENGTH + 1] = {0};
-	char humid[HUMID_LENGTH + 1] = {0};
-} dataFrame;
+	char co2[CO2_LENGTH + 1];
+	char temp[TEMP_LENGTH + 1];
+	char humid[HUMID_LENGTH + 1];
+};
 
-struct {
-	uint8_t curDataFrameNum = 0;
-	uint16_t curPageNum = 0;
+struct EEPROM_struct {
+	uint8_t curDataFrameNum;
+	uint16_t curPageNum;
 
-	char txBuff[PAGE_SIZE] = ""; // size is equal to page size, because reading from EEPROM by one page
-	char rxBuff[30] = "";		 // size is equal to data frame size
-} EEPROM_struct;
+	char txBuff[PAGE_SIZE];			// size is equal to page size, because reading from EEPROM by one page
+	char rxBuff[DATA_FRAME_LENGTH]; // size is equal to data frame size
+};
+
+dataFrameStruct dataFrame;
+EEPROM_struct EEPROM_data;
 
 int i;
 int loraStatus = 0;
@@ -194,7 +197,10 @@ int main(void) {
 		/* USER CODE END WHILE */
 		loraStatus = SX1278_LoRaRxPacket(&SX1278);
 
-		if (loraStatus > 0) {
+		if (loraStatus == MEAS_TX_BUFF_LENGTH) {
+
+			HAL_GPIO_WritePin(LORA_TX_GPIO_Port, LORA_TX_Pin, GPIO_PIN_SET);
+
 			RTC_TimeTypeDef sTime = {0};
 			RTC_DateTypeDef DateToUpdate = {0};
 
@@ -215,25 +221,28 @@ int main(void) {
 				sprintf(UartTxBuff, "#%d H:%d D:%02d M:%02d Y:%04d CO2:%s TEMP:%s HUMID:%s\r\n", dataFrame.measNum, dataFrame.date.Hour, dataFrame.date.Date,
 						dataFrame.date.Month, dataFrame.date.Year, dataFrame.co2, dataFrame.temp, dataFrame.humid);
 				HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
-				
-				sprintf(EEPROM_struct.txBuff + EEPROM_struct.curDataFrameNum * DATA_FRAME_LENGTH, "%-5d%-3d%-3d%-3d%-3d%s%s%s", dataFrame.measNum,
-						dataFrame.date.Date, dataFrame.date.Month, dataFrame.date.Year, dataFrame.date.Hour, dataFrame.co2, dataFrame.temp, dataFrame.humid);
-				EEPROM_struct.curDataFrameNum++;
-				if (EEPROM_struct.curPageNum == (PAGE_SIZE - 1)) {
 
-					bool writeResult = extEEPROM_writePage(EEPROM_struct.curPageNum, (uint8_t *)EEPROM_struct.txBuff, DEFAULT_NUM_ATTEMPTS);
+				sprintf(EEPROM_data.txBuff + EEPROM_data.curDataFrameNum * DATA_FRAME_LENGTH, "%-5d%-3d%-3d%-3d%-3d%s%s%s", dataFrame.measNum,
+						dataFrame.date.Date, dataFrame.date.Month, dataFrame.date.Year, dataFrame.date.Hour, dataFrame.co2, dataFrame.temp, dataFrame.humid);
+				EEPROM_data.curDataFrameNum++;
+				if (EEPROM_data.curDataFrameNum == (PAGE_SIZE / DATA_FRAME_LENGTH)) {
+					HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_SET);
+					bool writeResult = extEEPROM_writePage(EEPROM_data.curPageNum, (uint8_t *)EEPROM_data.txBuff, DEFAULT_NUM_ATTEMPTS);
+					EEPROM_data.curPageNum++;
+					EEPROM_data.curDataFrameNum = 0;
 					if (!writeResult) {
-						sprintf(UartTxBuff, "Failed to write %d page", EEPROM_struct.curPageNum);
+						sprintf(UartTxBuff, "Failed to write %d page", EEPROM_data.curPageNum);
 						HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
 						while (1) {
 						}
 					}
 
-					EEPROM_struct.curPageNum++;
+					EEPROM_data.curPageNum++;
+					HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_RESET);
 				}
 			}
-			HAL_GPIO_WritePin(LORA_DIO0_GPIO_Port, LORA_DIO0_Pin, GPIO_PIN_RESET);
 			HAL_Delay(500);
+			HAL_GPIO_WritePin(LORA_TX_GPIO_Port, LORA_TX_Pin, GPIO_PIN_RESET);
 		}
 		/* USER CODE BEGIN 3 */
 	}
