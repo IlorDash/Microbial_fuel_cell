@@ -22,6 +22,8 @@
 
 #include "SX1278.h"
 #include "extEEPROM.h"
+#include "net.h"
+#include "W5500.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -186,6 +188,10 @@ int main(void) {
 	loraStatus = SX1278_LoRaEntryRx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
 	HAL_Delay(100);
 
+	//net_init();
+
+	//uint8_t chipVer = readChipVerReg();
+
 	//*************************************
 	// HAL_RTC_SetDate()		//write func to set actual time via UART
 	//*************************************
@@ -195,6 +201,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
+
 		loraStatus = SX1278_LoRaRxPacket(&SX1278);
 
 		if (loraStatus == MEAS_TX_BUFF_LENGTH) {
