@@ -45,7 +45,12 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
+
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -55,6 +60,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_RTC_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 char *IntToStr(int n, int space, bool setSign)
 {
@@ -112,6 +119,8 @@ int i;
 int loraStatus = 0;
 SX1278_t SX1278;
 uint8_t regData;
+char *UART_txBuff;
+char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +272 85  f";
 
 struct
 {
@@ -145,16 +154,34 @@ int main(void)
 	SystemClock_Config();
 
 	/* USER CODE BEGIN SysInit */
-
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_I2C1_Init();
 	MX_SPI1_Init();
+	MX_RTC_Init();
+	// MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
+
+	GPIOA->ODR = 0;
+	GPIOB->ODR = 0;
+	HAL_SPI_DeInit(&hspi1);
+	HAL_I2C_DeInit(&hi2c1);
+	// HAL_UART_DeInit(&huart2);
+
+	HAL_SuspendTick();
+	HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	HAL_ResumeTick();
+	SystemClock_Config(); // рестартуем системный клок
+
 	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-	scd30.initialize(hi2c1);
+
+	MX_I2C1_Init();
+	MX_SPI1_Init();
+	// MX_USART2_UART_Init();
+
+	// scd30.initialize(hi2c1);
 
 	SX1278_hw_t SX1278_pins;
 
@@ -168,7 +195,7 @@ int main(void)
 
 	SX1278.hw = &SX1278_pins;
 
-	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_6, SX1278_LORA_BW_20_8KHZ, 10);
+	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 
 	/* USER CODE END 2 */
 	/* Infinite loop */
@@ -177,7 +204,7 @@ int main(void)
 	{
 		float result[3] = {0};
 		/* USER CODE END WHILE */
-		if (scd30.isAvailable())
+		/*if (scd30.isAvailable())
 		{
 			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
 			char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
@@ -193,13 +220,35 @@ int main(void)
 			txBuff[16] = 'f';
 
 			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-		}
+		}*/
+
+		loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
 
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET); // turn off the load
-		HAL_Delay(5000);												   // wait between enabling
-		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET);   // turn on the load
-		HAL_Delay(2000);												   // wait for scd 30 waking up
-																		   /* USER CODE BEGIN 3 */
+		// UART_txBuff = "i'm goint to sleep!\r\n";
+		// HAL_UART_Transmit(&huart2, (uint8_t *)UART_txBuff, strlen(UART_txBuff), 1000);
+
+		GPIOA->ODR = 0;
+		GPIOB->ODR = 0;
+		HAL_SPI_DeInit(&hspi1);
+		HAL_I2C_DeInit(&hi2c1);
+		// HAL_UART_DeInit(&huart2);
+
+		HAL_Delay(100); // wait between enabling
+		HAL_SuspendTick();
+		HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+		HAL_ResumeTick();
+		SystemClock_Config(); // рестартуем системный клок
+		HAL_Delay(100);
+
+		MX_I2C1_Init();
+		MX_SPI1_Init();
+		// MX_USART2_UART_Init();
+		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
+		SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+		HAL_Delay(100); // wait for scd 30 waking up
+						/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
 }
@@ -217,16 +266,21 @@ void SystemClock_Config(void)
 	/** Configure the main internal regulator output voltage
 	 */
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+	/** Configure LSE Drive Capability
+	 */
+	HAL_PWR_EnableBkUpAccess();
+	__HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSE;
+	RCC_OscInitStruct.LSEState = RCC_LSE_ON;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_4;
-	RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_2;
+	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_3;
+	RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_3;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
 		Error_Handler();
@@ -239,12 +293,14 @@ void SystemClock_Config(void)
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
 	{
 		Error_Handler();
 	}
-	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_RTC;
+	PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
 	PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+	PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
 	{
 		Error_Handler();
@@ -267,7 +323,7 @@ static void MX_I2C1_Init(void)
 
 	/* USER CODE END I2C1_Init 1 */
 	hi2c1.Instance = I2C1;
-	hi2c1.Init.Timing = 0x6010C7FF;
+	hi2c1.Init.Timing = 0x40003EFF;
 	hi2c1.Init.OwnAddress1 = 0;
 	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -294,6 +350,46 @@ static void MX_I2C1_Init(void)
 	/* USER CODE BEGIN I2C1_Init 2 */
 
 	/* USER CODE END I2C1_Init 2 */
+}
+
+/**
+ * @brief RTC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_RTC_Init(void)
+{
+
+	/* USER CODE BEGIN RTC_Init 0 */
+
+	/* USER CODE END RTC_Init 0 */
+
+	/* USER CODE BEGIN RTC_Init 1 */
+
+	/* USER CODE END RTC_Init 1 */
+	/** Initialize RTC Only
+	 */
+	hrtc.Instance = RTC;
+	hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+	hrtc.Init.AsynchPrediv = 127;
+	hrtc.Init.SynchPrediv = 255;
+	hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+	hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+	hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+	if (HAL_RTC_Init(&hrtc) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/** Enable the WakeUp
+	 */
+	if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 10, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN RTC_Init 2 */
+
+	/* USER CODE END RTC_Init 2 */
 }
 
 /**
@@ -331,6 +427,40 @@ static void MX_SPI1_Init(void)
 	/* USER CODE BEGIN SPI1_Init 2 */
 
 	/* USER CODE END SPI1_Init 2 */
+}
+
+/**
+ * @brief USART2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USART2_UART_Init(void)
+{
+
+	/* USER CODE BEGIN USART2_Init 0 */
+
+	/* USER CODE END USART2_Init 0 */
+
+	/* USER CODE BEGIN USART2_Init 1 */
+
+	/* USER CODE END USART2_Init 1 */
+	huart2.Instance = USART2;
+	huart2.Init.BaudRate = 9600;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+	huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+	if (HAL_HalfDuplex_Init(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN USART2_Init 2 */
+
+	/* USER CODE END USART2_Init 2 */
 }
 
 /**
