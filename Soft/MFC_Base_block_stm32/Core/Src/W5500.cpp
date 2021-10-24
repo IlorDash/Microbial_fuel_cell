@@ -2,13 +2,11 @@
 
 extern SPI_HandleTypeDef hspi2;
 
-SPI_HandleTypeDef etSPI = hspi2;
-
 extern char str1[60];
 char tmpbuf[30] = {0};
 uint8_t sect[515];
-tcp_prop_ptr tcpprop;
-extern http_sock_prop_ptr httpsockprop[2];
+tcp_prop_ptr tcpProp;
+extern http_sock_prop_ptr httpSockProp[2];
 uint8_t macaddr[6] = MAC_ADDR;
 extern uint8_t ipaddr[4];
 extern uint8_t ipgate[4];
@@ -18,12 +16,12 @@ extern uint16_t local_port;
 void w5500_writeReg(uint8_t op, uint16_t addres, uint8_t data) {
 	uint8_t buf[] = {addres >> 8, addres, op | (RWB_WRITE << 2), data};
 	SS_SELECT();
-	HAL_SPI_Transmit(&etSPI, buf, 4, 0xFFFFFFFF);
+	HAL_SPI_Transmit(&hspi2, buf, 4, 0xFFFFFFFF);
 	SS_DESELECT();
 }
 void w5500_writeBuf(data_sect_ptr *datasect, uint16_t len) {
 	SS_SELECT();
-	HAL_SPI_Transmit(&etSPI, (uint8_t *)datasect, len, 0xFFFFFFFF);
+	HAL_SPI_Transmit(&hspi2, (uint8_t *)datasect, len, 0xFFFFFFFF);
 	SS_DESELECT();
 }
 
@@ -39,7 +37,7 @@ uint8_t w5500_readReg(uint8_t op, uint16_t addres) {
 	uint8_t wbuf[] = {addres >> 8, addres, op, 0x0};
 	uint8_t rbuf[4];
 	SS_SELECT();
-	HAL_SPI_TransmitReceive(&etSPI, wbuf, rbuf, 4, 0xFFFFFFFF);
+	HAL_SPI_TransmitReceive(&hspi2, wbuf, rbuf, 4, 0xFFFFFFFF);
 	SS_DESELECT();
 	data = rbuf[3];
 	return data;
@@ -47,8 +45,8 @@ uint8_t w5500_readReg(uint8_t op, uint16_t addres) {
 
 void w5500_readBuf(data_sect_ptr *datasect, uint16_t len) {
 	SS_SELECT();
-	HAL_SPI_Transmit(&etSPI, (uint8_t *)datasect, 3, 0xFFFFFFFF);
-	HAL_SPI_Receive(&etSPI, (uint8_t *)datasect, len, 0xFFFFFFFF);
+	HAL_SPI_Transmit(&hspi2, (uint8_t *)datasect, 3, 0xFFFFFFFF);
+	HAL_SPI_Receive(&hspi2, (uint8_t *)datasect, len, 0xFFFFFFFF);
 	SS_DESELECT();
 }
 
@@ -166,7 +164,7 @@ void w5500_init(void) {
 	w5500_writeReg(opcode, Sn_PORT1, local_port);
 
 	// initializing active socket
-	tcpprop.cur_sock = 0;
+	tcpProp.cur_sock = 0;
 
 	// open socket 0
 	OpenSocket(0, Mode_TCP);
@@ -188,31 +186,35 @@ void w5500_init(void) {
 void w5500_packetReceive(void) {
 	uint16_t point;
 	uint16_t len;
-	if (w5500_getSocketStatus(tcpprop.cur_sock) == SOCK_ESTABLISHED) {
-		if (httpsockprop[tcpprop.cur_sock].data_stat == DATA_COMPLETED) {
+	uint8_t curSockStatus = w5500_getSocketStatus(tcpProp.cur_sock);
+	if (curSockStatus == SOCK_ESTABLISHED) {
+		if (httpSockProp[tcpProp.cur_sock].data_stat == DATA_COMPLETED) {
 			// Display size of received data
 			len = GetSizeRX(0);
 			sprintf(str1, "len_rx_buf:0x%04X", len);
-			point = GetReadPointer(tcpprop.cur_sock);
+			point = GetReadPointer(tcpProp.cur_sock);
 			sprintf(str1, "Sn_RX_RD:0x%04X", point);
 			// if received empty package, then leave the function
 			if (!len) {
 				return;
 			}
-			w5500_readSockBuf(tcpprop.cur_sock, point, (uint8_t *)tmpbuf, 20);
+			w5500_readSockBuf(tcpProp.cur_sock, point, (uint8_t *)tmpbuf, 20);
 
 			if (strncmp(tmpbuf, "GET /", 5) == 0) {
-				// HAL_UART_Transmit(&huart2, (uint8_t *)"HTTPrn", 6, 0x1000);
-				httpsockprop[tcpprop.cur_sock].prt_tp = PRT_TCP_HTTP;
 				http_request();
 			}
-		} else if (httpsockprop[tcpprop.cur_sock].data_stat == DATA_MIDDLE) {
-			if (httpsockprop[tcpprop.cur_sock].prt_tp == PRT_TCP_HTTP) {
-			}
-		} else if (httpsockprop[tcpprop.cur_sock].data_stat == DATA_LAST) {
-			if (httpsockprop[tcpprop.cur_sock].prt_tp == PRT_TCP_HTTP) {
-			}
 		}
+	} else if (curSockStatus == SOCK_CLOSE_WAIT) {
+		DisconnectSocket(tcpProp.cur_sock); // Disconnecting
+		SocketClosedWait(tcpProp.cur_sock);
+
+		OpenSocket(tcpProp.cur_sock, Mode_TCP);
+		// Waiting init socket (status SOCK_INIT)
+		SocketInitWait(tcpProp.cur_sock);
+
+		// Continue listering socket
+		ListenSocket(tcpProp.cur_sock);
+		SocketListenWait(tcpProp.cur_sock);
 	}
 }
 

@@ -95,6 +95,7 @@ typedef struct data_sect {
 #define SOCK_INIT 0x13
 #define SOCK_LISTEN 0x14
 #define SOCK_ESTABLISHED 0x17
+#define SOCK_CLOSE_WAIT 0x1C
 
 #define Sn_MSSR0 0x0012
 #define Sn_MSSR1 0x0013

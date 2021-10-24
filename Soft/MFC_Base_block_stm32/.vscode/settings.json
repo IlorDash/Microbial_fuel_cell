@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "xtree": "cpp",
+        "xutility": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "map": "cpp"
+    }
+}
