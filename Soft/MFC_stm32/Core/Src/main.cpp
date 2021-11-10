@@ -45,8 +45,6 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
-RTC_HandleTypeDef hrtc;
-
 SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
@@ -60,7 +58,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_RTC_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 char *IntToStr(int n, int space, bool setSign)
@@ -120,7 +117,7 @@ int loraStatus = 0;
 SX1278_t SX1278;
 uint8_t regData;
 char *UART_txBuff;
-char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +272 85  f";
+char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +270 85  f";
 
 struct
 {
@@ -157,18 +154,15 @@ int main(void)
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_I2C1_Init();
-	MX_SPI1_Init();
-	MX_RTC_Init();
+
 	// MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
 
 	GPIOA->ODR = 0;
 	GPIOB->ODR = 0;
 	HAL_SPI_DeInit(&hspi1);
-	HAL_I2C_DeInit(&hi2c1);
-	// HAL_UART_DeInit(&huart2);
+	// HAL_I2C_DeInit(&hi2c1);
+	//  HAL_UART_DeInit(&huart2);
 
 	HAL_SuspendTick();
 	HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
@@ -176,8 +170,8 @@ int main(void)
 	SystemClock_Config(); // рестартуем системный клок
 
 	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-
-	MX_I2C1_Init();
+	MX_GPIO_Init();
+	// MX_I2C1_Init();
 	MX_SPI1_Init();
 	// MX_USART2_UART_Init();
 
@@ -202,7 +196,7 @@ int main(void)
 	/* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		float result[3] = {0};
+		// float result[3] = {0};
 		/* USER CODE END WHILE */
 		/*if (scd30.isAvailable())
 		{
@@ -232,8 +226,8 @@ int main(void)
 		GPIOA->ODR = 0;
 		GPIOB->ODR = 0;
 		HAL_SPI_DeInit(&hspi1);
-		HAL_I2C_DeInit(&hi2c1);
-		// HAL_UART_DeInit(&huart2);
+		// HAL_I2C_DeInit(&hi2c1);
+		//  HAL_UART_DeInit(&huart2);
 
 		HAL_Delay(100); // wait between enabling
 		HAL_SuspendTick();
@@ -242,7 +236,7 @@ int main(void)
 		SystemClock_Config(); // рестартуем системный клок
 		HAL_Delay(100);
 
-		MX_I2C1_Init();
+		// MX_I2C1_Init();
 		MX_SPI1_Init();
 		// MX_USART2_UART_Init();
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
@@ -266,15 +260,10 @@ void SystemClock_Config(void)
 	/** Configure the main internal regulator output voltage
 	 */
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-	/** Configure LSE Drive Capability
-	 */
-	HAL_PWR_EnableBkUpAccess();
-	__HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSE;
-	RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -297,10 +286,9 @@ void SystemClock_Config(void)
 	{
 		Error_Handler();
 	}
-	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_I2C1 | RCC_PERIPHCLK_RTC;
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_I2C1;
 	PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
 	PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-	PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
 	{
 		Error_Handler();
@@ -350,46 +338,6 @@ static void MX_I2C1_Init(void)
 	/* USER CODE BEGIN I2C1_Init 2 */
 
 	/* USER CODE END I2C1_Init 2 */
-}
-
-/**
- * @brief RTC Initialization Function
- * @param None
- * @retval None
- */
-static void MX_RTC_Init(void)
-{
-
-	/* USER CODE BEGIN RTC_Init 0 */
-
-	/* USER CODE END RTC_Init 0 */
-
-	/* USER CODE BEGIN RTC_Init 1 */
-
-	/* USER CODE END RTC_Init 1 */
-	/** Initialize RTC Only
-	 */
-	hrtc.Instance = RTC;
-	hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
-	hrtc.Init.AsynchPrediv = 127;
-	hrtc.Init.SynchPrediv = 255;
-	hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
-	hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
-	hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-	hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-	if (HAL_RTC_Init(&hrtc) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/** Enable the WakeUp
-	 */
-	if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 10, RTC_WAKEUPCLOCK_CK_SPRE_16BITS) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	/* USER CODE BEGIN RTC_Init 2 */
-
-	/* USER CODE END RTC_Init 2 */
 }
 
 /**
@@ -492,7 +440,7 @@ static void MX_GPIO_Init(void)
 
 	/*Configure GPIO pin : POWER_GOOD_Pin */
 	GPIO_InitStruct.Pin = POWER_GOOD_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(POWER_GOOD_GPIO_Port, &GPIO_InitStruct);
 
@@ -502,6 +450,10 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(LOAD_SW_GPIO_Port, &GPIO_InitStruct);
+
+	/* EXTI interrupt init*/
+	HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
 /* USER CODE BEGIN 4 */
