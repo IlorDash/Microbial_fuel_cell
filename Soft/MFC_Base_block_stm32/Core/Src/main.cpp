@@ -21,10 +21,9 @@
 #include "main.h"
 
 #include "SX1278.h"
-#include "extEEPROM.h"
 #include "net.h"
 #include "W5500.h"
-
+#include "extEEPROM.h"
 #include <stdio.h>
 #include <string.h>
 /* Private includes ----------------------------------------------------------*/
@@ -39,19 +38,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define START_MARK 's'
-#define FINISH_MARK 'f'
+// #define START_MARK 's'
+// #define FINISH_MARK 'f'
 
-#define CO2_LENGTH 6
-#define TEMP_LENGTH 5
-#define HUMID_LENGTH 4
+// #define CO2_LENGTH 6
+// #define TEMP_LENGTH 5
+// #define HUMID_LENGTH 4
 
-#define MEAS_TX_BUFF_LENGTH 17
-#define DATA_FRAME_LENGTH 32
-
-#define MEAS_VARS_NUM 3
-#define DATA_FRAME_VARS_NUM 8
-#define TABLE_PAGE_MEAS_NUM 15
+#define CURRENT_CENTURY 2000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -82,35 +76,44 @@ static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
-
+void set_time();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-bool parseMeas(char buff[], uint8_t len, uint16_t *_co2, int8_t *_temp, uint8_t *_humid) {
-	int pos = 0;
-	while (buff[pos] != START_MARK) {
-		pos++;
-	}
-	if ((buff[pos] != START_MARK) || (buff[pos + CO2_LENGTH + TEMP_LENGTH + HUMID_LENGTH + 1] != FINISH_MARK)) {
-		return false;
-	}
-	buff += pos + 1;
-	*_co2 = atoi(buff);
-	*_temp = atoi(buff + CO2_LENGTH);
-	*_humid = atoi(buff + CO2_LENGTH + TEMP_LENGTH);
-	// strncpy(_co2, buff, CO2_LENGTH);
-	// strncpy(_temp, buff + CO2_LENGTH, TEMP_LENGTH);
-	// strncpy(_humid, buff + CO2_LENGTH + TEMP_LENGTH, HUMID_LENGTH);
-	return true;
-}
+// bool parseMeas(char buff[], uint8_t len, uint16_t *_co2, int8_t *_temp, uint8_t *_humid) {
+// 	int pos = 0;
+// 	while (buff[pos] != START_MARK) {
+// 		pos++;
+// 	}
+// 	if ((buff[pos] != START_MARK) || (buff[pos + CO2_LENGTH + TEMP_LENGTH + HUMID_LENGTH + 1] != FINISH_MARK)) {
+// 		return false;
+// 	}
+// 	buff += pos + 1;
+// 	*_co2 = atoi(buff);
+// 	*_temp = atoi(buff + CO2_LENGTH);
+// 	*_humid = atoi(buff + CO2_LENGTH + TEMP_LENGTH);
+// 	strncpy(_co2, buff, CO2_LENGTH);
+// 	strncpy(_temp, buff + CO2_LENGTH, TEMP_LENGTH);
+// 	strncpy(_humid, buff + CO2_LENGTH + TEMP_LENGTH, HUMID_LENGTH);
+// 	return true;
+// }
+
+static uint16_t curYear = 21;
+static uint8_t curMonth = 10;
+static uint16_t curDate = 30;
+static uint8_t curWeekday = 1;
+
+static uint8_t curHours = 12;
+static uint8_t curMinutes = 0;
+static uint8_t curSeconds = 0;
 
 typedef struct {
 	uint8_t Hour;
 
 	uint8_t Month;
 	uint8_t Date;
-	uint8_t Year;
+	uint16_t Year;
 
 } __attribute__((packed)) dateTypeDef;
 
@@ -135,6 +138,9 @@ struct EEPROM_struct {
 TDataFrame dataFrame;
 EEPROM_struct EEPROM_data;
 
+uint16_t *p_curPageNum = &EEPROM_data.curPageNum; // using pointers because extern struct if not working
+uint8_t *p_curDataFrameNum = &EEPROM_data.curDataFrameNum;
+
 int i;
 int loraStatus = 0;
 SX1278_t SX1278;
@@ -144,12 +150,47 @@ char LoRaTxBuff[32] = "";
 char UartTxBuff[64] = "";
 char UartRxBuff[32] = "";
 
-char *measTestDump[] = {
-	"1    10 9  10 5  42424+27285 ",
-	"2    11 10 11 6  42425-28090 ",
-	"3    12 11 13 7  4200 -27 100",
-	"4    8  9  10 5  42424+27285 ",
-};
+// char *measTestDump[] = {
+// 	"1    10 9  10 5  42424+272 85",
+// 	"2    11 10 11 6  42425-280 90",
+// 	"3    12 11 13 7  4200 -27 100",
+// 	"4    8  9  10 5  42424+272 85",
+// 	"5    10 9  10 5  42424+272 85",
+// 	"6    11 10 11 6  42425-280 90",
+// 	"7    12 11 13 7  4200 -27 100",
+// 	"8    8  9  10 5  42424+272 85",
+// 	"9    10 9  10 5  42424+272 85",
+// 	"10   11 10 11 6  42425-280 90",
+// 	"11   12 11 13 7  4200 -27 100",
+// 	"12   8  9  10 5  42424+272 85",
+// 	"13   10 9  10 5  42424+272 85",
+// 	"14   11 10 11 6  42425-280 90",
+// 	"15   12 11 13 7  4200 -27 100",
+// 	"16   8  9  10 5  42424+272 85",
+// 	"17   10 9  10 5  42424+272 85",
+// 	"18   11 10 11 6  42425-280 90",
+// 	"19   11 10 11 6  42425-280 90",
+// 	"20   12 11 13 7  4200 -27 100",
+// 	"21   8  9  10 5  42424+272 85",
+// 	"22   10 9  10 5  42424+272 85",
+// 	"23   11 10 11 6  42425-280 90",
+// 	"24   11 10 11 6  42425-280 90",
+// 	"25   12 11 13 7  4200 -27 100",
+// 	"26   8  9  10 5  42424+272 85",
+// 	"27   10 9  10 5  42424+272 85",
+// 	"28   11 10 11 6  42425-280 90",
+// 	"29   12 11 13 7  4200 -27 100",
+// 	"30   8  9  10 5  42424+272 85",
+// 	"31   10 9  10 5  42424+272 85",
+// 	"32   11 10 11 6  42425-280 90",
+// 	"33   11 10 11 6  42425-280 90",
+// 	"34   12 11 13 7  4200 -27 100",
+// 	"35   8  9  10 5  42424+272 85",
+// 	"36   10 9  10 5  42424+272 85",
+// 	"37   11 10 11 6  42425-280 90"};
+
+//"%-5d%-3d%-3d%-3d%-3d%-5d%+-3d%3d"
+
 /* USER CODE END 0 */
 
 /**
@@ -186,6 +227,11 @@ int main(void) {
 	MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
 
+	//*************************************
+	// HAL_RTC_SetDate()		//write func to set actual time via UART
+	set_time();
+	//*************************************
+
 	SX1278_hw_t SX1278_pins;
 
 	SX1278_pins.dio0.pin = LORA_DIO0_Pin;
@@ -204,12 +250,12 @@ int main(void) {
 	HAL_Delay(100);
 
 	net_init();
-	uint8_t chipVer = readChipVerReg();
+	// uint8_t chipVer = readChipVerReg();
 
-	//*************************************
-	// HAL_RTC_SetDate()		//write func to set actual time via UART
-	//*************************************
-
+	////////////////////////////////////////////////////////////////////////////////////////			ONLY FOR TEST
+	// EEPROM_data.curDataFrameNum = 1; // using pointers because extern struct if not working
+	// EEPROM_data.curPageNum = 9;
+	////////////////////////////////////////////////////////////////////////////////////////
 	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
@@ -225,7 +271,7 @@ int main(void) {
 			RTC_TimeTypeDef sTime = {0};
 			RTC_DateTypeDef DateToUpdate = {0};
 
-			HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN); // RTC_FORMAT_BIN , RTC_FORMAT_BCD
+			HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
 			HAL_RTC_GetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BIN);
 
 			dataFrame.date.Date = DateToUpdate.Date;
@@ -240,29 +286,29 @@ int main(void) {
 			int8_t parseResult = sscanf(LoRaRxBuff, "s%5d %4d %3d f", &dataFrame.co2, &dataFrame.temp, &dataFrame.humid);
 			if (parseResult == MEAS_VARS_NUM) {
 				sprintf(UartTxBuff, "#%d H:%d D:%02d M:%02d Y:%04d CO2:%-5d TEMP:%+-3d HUMID:%3d\r\n", dataFrame.measNum, dataFrame.date.Hour,
-						dataFrame.date.Date, dataFrame.date.Month, dataFrame.date.Year, dataFrame.co2, dataFrame.temp, dataFrame.humid);
+						dataFrame.date.Date, dataFrame.date.Month, (dataFrame.date.Year + CURRENT_CENTURY), dataFrame.co2, dataFrame.temp, dataFrame.humid);
 				HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
-
-				// memcpy(EEPROM_data.txBuff + 0 * sizeof(dataFrame), &dataFrame, sizeof(dataFrame));
 
 				sprintf(EEPROM_data.txBuff + EEPROM_data.curDataFrameNum * DATA_FRAME_LENGTH, "%-5d%-3d%-3d%-3d%-3d%-5d%+-3d%3d", dataFrame.measNum,
 						dataFrame.date.Date, dataFrame.date.Month, dataFrame.date.Year, dataFrame.date.Hour, dataFrame.co2, dataFrame.temp, dataFrame.humid);
 
 				EEPROM_data.curDataFrameNum++;
-				if (EEPROM_data.curDataFrameNum == (PAGE_SIZE / DATA_FRAME_LENGTH)) {
-					HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_SET);
-					// bool writeResult = extEEPROM_writePage(EEPROM_data.curPageNum, (uint8_t *)EEPROM_data.txBuff, DEFAULT_NUM_ATTEMPTS);
 
-					// if (!writeResult) {
-					// 	sprintf(UartTxBuff, "Failed to write %d page", EEPROM_data.curPageNum);
-					// 	HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
-					// 	HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
-					// 	while (1) {
-					// 	}
-					// }
+				HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_SET);
+				bool writeResult = extEEPROM_writePage(EEPROM_data.curPageNum, (uint8_t *)EEPROM_data.txBuff, DEFAULT_NUM_ATTEMPTS);
+
+				if (!writeResult) {
+					sprintf(UartTxBuff, "Failed to write %d page", EEPROM_data.curPageNum);
+					HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
+					HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
+					while (1) {
+					}
+				}
+				HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_RESET);
+
+				if (EEPROM_data.curDataFrameNum == (PAGE_SIZE / DATA_FRAME_LENGTH)) {
 					EEPROM_data.curPageNum++;
 					EEPROM_data.curDataFrameNum = 0;
-					HAL_GPIO_WritePin(STM_READY_GPIO_Port, STM_READY_Pin, GPIO_PIN_RESET);
 				}
 			}
 			HAL_Delay(500);
@@ -272,31 +318,26 @@ int main(void) {
 	}
 	/* USER CODE END 3 */
 }
-void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t pageNum) {
+void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t startDataFrame, uint8_t dataFramesNum) {
 
-	EEPROM_data.curPageNum = 0;
-	EEPROM_data.curDataFrameNum = 4;
-
-	// if (!EEPROM_data.curPageNum) { // if eeprom is empty then leave func
-	//	return;
-	// }
-	if (pageNum > (EEPROM_data.curDataFrameNum / TABLE_PAGE_MEAS_NUM + 1)) {
+	if ((EEPROM_data.curDataFrameNum + EEPROM_data.curPageNum * PAGE_SIZE / DATA_FRAME_LENGTH) == 0) { // if eeprom is empty then leave func
+		return;
+	}
+	if ((startDataFrame + dataFramesNum) > (EEPROM_data.curDataFrameNum + EEPROM_data.curPageNum * PAGE_SIZE / DATA_FRAME_LENGTH)) {
 		return;
 	}
 
-	// for (int i = 0; i < (EEPROM_data.curPageNum * PAGE_SIZE / DATA_FRAME_LENGTH + EEPROM_data.curDataFrameNum); i++) { // i - number of dataframe in eeprom
-	// page
-	for (int i = ((pageNum - 1) * TABLE_PAGE_MEAS_NUM); i < (4); i++) {
-		// bool readResult = extEEPROM_read((i * DATA_FRAME_LENGTH) / PAGE_SIZE, (i * DATA_FRAME_LENGTH) % PAGE_SIZE, (uint8_t *)EEPROM_data.rxBuff,
-		// 								 DATA_FRAME_LENGTH, DEFAULT_NUM_ATTEMPTS);
-		// if (!readResult) {
-		// 	sprintf(UartTxBuff, "Failed to read %d frame", i);
-		// 	HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
-		// 	HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
-		// 	while (1) {
-		// 	}
-		// }
-		strcpy(EEPROM_data.rxBuff, measTestDump[i]);
+	for (int i = startDataFrame; i < (startDataFrame + dataFramesNum); i++) { // i - number of dataframe in eeprom
+		bool readResult = extEEPROM_read((i * DATA_FRAME_LENGTH) / PAGE_SIZE, (i * DATA_FRAME_LENGTH) % PAGE_SIZE, (uint8_t *)EEPROM_data.rxBuff,
+										 DATA_FRAME_LENGTH, DEFAULT_NUM_ATTEMPTS);
+		if (!readResult) {
+			sprintf(UartTxBuff, "Failed to read %d frame", i);
+			HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
+			HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
+			while (1) {
+			}
+		}
+		// strcpy(EEPROM_data.rxBuff, measTestDump[i]);
 
 		uint32_t tMeasNum = 0;
 		uint32_t tDate = 0;
@@ -304,7 +345,7 @@ void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t pageNum) {
 		uint32_t tYear = 0;
 		uint32_t tHour = 0;
 		uint32_t tCO2 = 0;
-		int32_t tTemp = 0;
+		int16_t tTemp = 0;
 		uint32_t tHumid = 0;
 		int8_t parseResult = sscanf(EEPROM_data.rxBuff, "%5u%3u%3u%3u%3u%5u%4d%3u", &tMeasNum, &tDate, &tMonth, &tYear, &tHour, &tCO2, &tTemp, &tHumid);
 
@@ -313,10 +354,28 @@ void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t pageNum) {
 			while (1) {
 			}
 		}
-		char rowBuff[128] = "0";
-		sprintf(rowBuff, "<tr><td>%-5d</td><td>%-2d</td><td>%-2d</td><td>%-2d</td><td>%-4d</td><td>%-5d</td><td>%+-3d</td><td>%-3d</td></tr>", tMeasNum, tDate, tMonth,
-				tYear, tHour, tCO2, tTemp, tHumid);
+		char rowBuff[HTML_TABLE_MEAS_ROW_LEN + 1] = "0";
+		sprintf(rowBuff, "<tr><td>%-5d</td><td>%-2d</td><td>%-2d</td><td>%-2d</td><td>%-4d</td><td>%-5d</td><td>%+-2d.%1d</td><td>%-3d</td></tr>", tMeasNum,
+				tHour, tDate, tMonth, tYear + CURRENT_CENTURY, tCO2, tTemp / 10, tTemp % 10, tHumid);
 		strncat(htmlTable, rowBuff, strlen(rowBuff));
+	}
+}
+
+void set_time() {
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+	sTime.Hours = curHours;		// set hours
+	sTime.Minutes = curMinutes; // set minutes
+	sTime.Seconds = curSeconds; // set seconds
+	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
+	}
+	sDate.WeekDay = curWeekday; // day
+	sDate.Month = curMonth;		// month
+	sDate.Date = curDate;		// date
+	sDate.Year = curYear;		// year
+	if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
 	}
 }
 

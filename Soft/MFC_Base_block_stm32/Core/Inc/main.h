@@ -32,12 +32,19 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define MEAS_TX_BUFF_LENGTH 17
+#define DATA_FRAME_LENGTH 32
+
+#define MEAS_VARS_NUM 3
+#define DATA_FRAME_VARS_NUM 8
+#define TABLE_PAGE_MEAS_NUM 15
+
+#define HTML_TABLE_MEAS_ROW_LEN 110
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -93,7 +100,7 @@ void Error_Handler(void);
 #define EEPROM_SDA_Pin GPIO_PIN_7
 #define EEPROM_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t pageNum);
+void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t startDataFrame, uint8_t dataFramesNum);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

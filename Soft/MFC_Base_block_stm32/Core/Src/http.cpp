@@ -7,14 +7,16 @@
 #define SECT_SIZE 512
 #define SERVICE_BYTES_NUM 3
 #define SOCK_TX_BUFF_SIZE 2048
+#define EEPROM_PAGE_SIZE 128 // in Bytes
 
 extern char str1[60];
 extern char tmpbuf[30];
 extern uint8_t sect[SECT_SIZE + SERVICE_BYTES_NUM];
-http_sock_prop_ptr httpSockProp[2];
 extern tcp_prop_ptr tcpProp;
+extern uint16_t *p_curPageNum;
+extern uint16_t *p_curDataFrameNum;
 
-volatile uint16_t tcp_size_wnd = 2048;
+http_sock_prop_ptr httpSockProp[2];
 
 char *pages_names[] = {"hello_world.html"};
 std::map<std::string, char *> pages_map = {{pages_names[0], hello_world_page}};
@@ -26,6 +28,10 @@ const char http_header[] = {"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"
 const char error_header[] = {"HTTP/1.0 404 File not found\r\nServer: nginx\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"};
 char *header;
 
+bool isTablePage = false;
+uint16_t txTableRowsNum = 0;
+uint16_t totalTableRowsNum = 0;
+
 bool in_array(char *value, char *array[]) {
 	int size = PAGES_NUM;
 	for (int i = 0; i < size; i++) {
@@ -33,82 +39,80 @@ bool in_array(char *value, char *array[]) {
 			return true;
 		}
 	}
+
 	return false;
 }
 
-void tcp_send_http_one_data() {
-	uint16_t i = 0;
-	uint16_t data_len = 0;
-	uint16_t header_len = 0;
+void tcp_send_http_data(char *dataBuff, uint16_t data_len) {
+
+	if (data_len > SOCK_TX_BUFF_SIZE) {
+		HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
+		while (1) {
+		}
+	}
+
 	uint16_t end_point;
 	uint8_t num_sect = 0;
 	uint16_t len_sect;
 
-	if (httpSockProp[tcpProp.cur_sock].http_doc == EXISTING_HTML) {
+	end_point = GetWritePointer(tcpProp.cur_sock);
+	end_point += data_len;
+	// Fill with data packet transmit buff
+	SetWritePointer(tcpProp.cur_sock, end_point);
+	end_point = GetWritePointer(tcpProp.cur_sock);
 
-		header = (char *)http_header;
-		header_len = strlen(header);
-		bool isTablePage = !strncmp(httpSockProp[tcpProp.cur_sock].pageName, tablePageName, strlen(tablePageName));
-		if (isTablePage) {
-			memset(table_page, 0, strlen(table_page));
-			strcat(table_page, table_page_start);
-			getMeasTablePageFromEEPROM(table_page, httpSockProp[tcpProp.cur_sock].pageNum);
-			strcat(table_page, table_page_end);
-                        data_len = strlen(table_page);
+	num_sect = data_len / SECT_SIZE;
+
+	for (uint16_t i = 0; i <= num_sect; i++) {
+		// not last sector
+		if (i < num_sect) {
+			len_sect = SECT_SIZE;
 		} else {
-			data_len = strlen(pages_map[httpSockProp[tcpProp.cur_sock].pageName]);
+			len_sect = data_len;
 		}
 
-		end_point = GetWritePointer(tcpProp.cur_sock);
-		end_point += header_len + data_len;
-		// Fill with data packet transmit buff
-		SetWritePointer(tcpProp.cur_sock, end_point);
-		end_point = GetWritePointer(tcpProp.cur_sock);
-		memcpy(sect + SERVICE_BYTES_NUM, header, header_len); // 3 service bytes
-		w5500_writeSockBuf(tcpProp.cur_sock, end_point, (uint8_t *)sect, header_len);
-		end_point += header_len;
+		memcpy(sect + SERVICE_BYTES_NUM, dataBuff + i * SECT_SIZE,
+			   len_sect); // reading 512 byte sectors from map and writing them to tx
 
-		num_sect = data_len / SECT_SIZE;
-
-		for (i = 0; i <= num_sect; i++) {
-			// not last sector
-			if (i < num_sect) {
-				len_sect = 512;
-			} else {
-				len_sect = data_len;
-			}
-
-			if (isTablePage) {
-				memcpy(sect + SERVICE_BYTES_NUM, table_page + i * SECT_SIZE,
-					   SECT_SIZE); // reading 512 byte sectors from map and writing them to tx
-			} else {
-				memcpy(sect + SERVICE_BYTES_NUM, pages_map[httpSockProp[tcpProp.cur_sock].pageName] + i * SECT_SIZE,
-					   SECT_SIZE); // reading 512 byte sectors from map and writing them to tx
-			}
-
-			w5500_writeSockBuf(tcpProp.cur_sock, end_point, (uint8_t *)sect, len_sect);
-			end_point += len_sect;
-			data_len -= len_sect;
-		}
-	} else { // error page case
-		header_len = strlen(error_header);
-		data_len = strlen(e404_html);
-		end_point = GetWritePointer(tcpProp.cur_sock);
-		end_point += header_len + data_len;
-		SetWritePointer(tcpProp.cur_sock, end_point);
-		end_point = GetWritePointer(tcpProp.cur_sock);
-
-		// Fill with data packet transmit buff
-		memcpy(sect + 3, error_header, header_len);
-		w5500_writeSockBuf(tcpProp.cur_sock, end_point, (uint8_t *)sect, header_len);
-		end_point += header_len;
-		memcpy(sect + 3, e404_html, data_len);
-		w5500_writeSockBuf(tcpProp.cur_sock, end_point, (uint8_t *)sect, data_len);
-		end_point += data_len;
+		w5500_writeSockBuf(tcpProp.cur_sock, end_point, (uint8_t *)sect, len_sect);
+		end_point += len_sect;
+		data_len -= len_sect;
 	}
 
 	RecvSocket(tcpProp.cur_sock);
-	SendSocket(tcpProp.cur_sock); // sending http answer
+	SendSocket(tcpProp.cur_sock); // sending http header
+}
+
+void tcp_send_http_data() {
+	uint16_t data_len = 0;
+	uint16_t header_len = 0;
+
+	if (httpSockProp[tcpProp.cur_sock].http_doc == EXISTING_HTML) {
+
+		header_len = strlen(http_header);
+		tcp_send_http_data((char *)http_header, header_len);
+		data_len = strlen(table_page_start);
+		tcp_send_http_data(table_page_start, data_len);
+
+		for (uint16_t i = 0; i < totalTableRowsNum; i++) { // starting from 1, because 0 we send with header
+
+			memset(table_page, 0, strlen(table_page));
+			getMeasTablePageFromEEPROM(table_page, i, 1);
+			data_len = strlen(table_page);
+
+			tcp_send_http_data(table_page, data_len);
+		}
+
+		data_len = strlen(table_page_end);
+		tcp_send_http_data(table_page_end, data_len);
+	} else { // error page case
+		header_len = strlen(error_header);
+		tcp_send_http_data((char *)error_header, header_len);
+
+		data_len = strlen(e404_html);
+		tcp_send_http_data(e404_html, data_len);
+	}
+
 	httpSockProp[tcpProp.cur_sock].data_stat = DATA_COMPLETED;
 }
 
@@ -146,18 +150,14 @@ void http_request() {
 		strcpy(httpSockProp[tcpProp.cur_sock].pageName, tmpbuf);
 	}
 
-	bool is_page_table = !(strncmp(httpSockProp[tcpProp.cur_sock].pageName, tablePageName, strlen(tablePageName)));
-	if (is_page_table) {
+	isTablePage = !(strncmp(httpSockProp[tcpProp.cur_sock].pageName, tablePageName, strlen(tablePageName)));
+	if (isTablePage) {
 		httpSockProp[tcpProp.cur_sock].http_doc = EXISTING_HTML;
-		// first include header size
-		httpSockProp[tcpProp.cur_sock].data_size = strlen(http_header);
-		// then size of document itself
-
-		httpSockProp[tcpProp.cur_sock].pageNum = atoi(httpSockProp[tcpProp.cur_sock].pageName + strlen(tablePageName) + 1);
-	} else if (in_array(httpSockProp[tcpProp.cur_sock].pageName, pages_names)) {
-		httpSockProp[tcpProp.cur_sock].http_doc = EXISTING_HTML;
-		// first include header size
-		httpSockProp[tcpProp.cur_sock].data_size = strlen(http_header);
+		totalTableRowsNum = (*p_curPageNum) * EEPROM_PAGE_SIZE / DATA_FRAME_LENGTH + *p_curDataFrameNum;
+		// } else if (in_array(httpSockProp[tcpProp.cur_sock].pageName, pages_names)) {
+		// 	httpSockProp[tcpProp.cur_sock].http_doc = EXISTING_HTML;
+		// 	httpSockProp[tcpProp.cur_sock].data_size = strlen(http_header);
+		// 	httpSockProp[tcpProp.cur_sock].data_size += strlen(pages_map[httpSockProp[tcpProp.cur_sock].pageName]);
 	} else {
 		httpSockProp[tcpProp.cur_sock].http_doc = E404_HTML;
 		// first include header size
@@ -166,7 +166,19 @@ void http_request() {
 		httpSockProp[tcpProp.cur_sock].data_size += strlen(e404_html);
 	}
 
-	tcp_send_http_one_data();
+	// httpSockProp[tcpProp.cur_sock].cnt_rem_data_part = httpSockProp[tcpProp.cur_sock].data_size / SOCK_TX_BUFF_SIZE + 1;
+	// httpSockProp[tcpProp.cur_sock].last_data_part_size = httpSockProp[tcpProp.cur_sock].data_size % SOCK_TX_BUFF_SIZE;
+	// if (httpSockProp[tcpProp.cur_sock].last_data_part_size == 0) {
+	// 	httpSockProp[tcpProp.cur_sock].last_data_part_size = SOCK_TX_BUFF_SIZE; // calc number of data parts
+	// 	httpSockProp[tcpProp.cur_sock].cnt_rem_data_part--;
+	// }
+	// httpSockProp[tcpProp.cur_sock].cnt_data_part = httpSockProp[tcpProp.cur_sock].cnt_rem_data_part;
+	// httpSockProp[tcpProp.cur_sock].first_data_part_size = SOCK_TX_BUFF_SIZE;
+	// if (httpSockProp[tcpProp.cur_sock].cnt_data_part == 1) {
+	// 	httpSockProp[tcpProp.cur_sock].first_data_part_size = httpSockProp[tcpProp.cur_sock].last_data_part_size;
+	// }
+
+	tcp_send_http_data();
 
 	DisconnectSocket(tcpProp.cur_sock); // Disconnecting
 	SocketClosedWait(tcpProp.cur_sock);

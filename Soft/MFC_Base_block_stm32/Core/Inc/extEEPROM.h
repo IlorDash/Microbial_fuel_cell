@@ -9,6 +9,7 @@ Based on https://github.com/afiskon/stm32-external-eeprom example
 #include <main.h>
 
 extern I2C_HandleTypeDef hi2c1;
+
 #define EEPROM_I2C &hi2c1
 
 // EEPROM ADDRESS (8bits)
