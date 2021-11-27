@@ -1,4 +1,5 @@
 #include "http.h"
+#include "main.h"
 #include "web_pages.h"
 #include <map>
 #include <string>
@@ -13,8 +14,7 @@ extern char str1[60];
 extern char tmpbuf[30];
 extern uint8_t sect[SECT_SIZE + SERVICE_BYTES_NUM];
 extern tcp_prop_ptr tcpProp;
-extern uint16_t *p_curPageNum;
-extern uint16_t *p_curDataFrameNum;
+extern EEPROM_struct EEPROM_data;
 
 http_sock_prop_ptr httpSockProp[2];
 
@@ -97,7 +97,7 @@ void tcp_send_http_data() {
 		for (uint16_t i = 0; i < totalTableRowsNum; i++) { // starting from 1, because 0 we send with header
 
 			memset(table_page, 0, strlen(table_page));
-			getMeasTablePageFromEEPROM(table_page, i, 1);
+			getMeasTableRowFromEEPROM(table_page, i);
 			data_len = strlen(table_page);
 
 			tcp_send_http_data(table_page, data_len);
@@ -153,7 +153,7 @@ void http_request() {
 	isTablePage = !(strncmp(httpSockProp[tcpProp.cur_sock].pageName, tablePageName, strlen(tablePageName)));
 	if (isTablePage) {
 		httpSockProp[tcpProp.cur_sock].http_doc = EXISTING_HTML;
-		totalTableRowsNum = (*p_curPageNum) * EEPROM_PAGE_SIZE / DATA_FRAME_LENGTH + *p_curDataFrameNum;
+		totalTableRowsNum = EEPROM_data.curDataFrameNum;
 		// } else if (in_array(httpSockProp[tcpProp.cur_sock].pageName, pages_names)) {
 		// 	httpSockProp[tcpProp.cur_sock].http_doc = EXISTING_HTML;
 		// 	httpSockProp[tcpProp.cur_sock].data_size = strlen(http_header);

@@ -17,5 +17,5 @@ char *e404_html = R"(
 char *hello_world_page = R"(<h1>Hello world!</h1>)";
 
 char *table_page_start
-	= R"(<html><head><title>Microbial fuel cell</title></head><body><h1>Data table</h1><table border="1"><tr><th>Meas num</th><th>Hour</th><th>Date</th><th>Month</th><th>Year</th><th>CO2 [ppm]</th><th>Temp [C]</th><th>Humid [%]</th></tr>)";
+	= R"(<html><head><title>Microbial fuel cell</title></head><body><h1>Data table</h1><table border="1"><tr><th>Sensor ID</th><th>Minute</th><th>Hour</th><th>Date</th><th>Month</th><th>CO2 [ppm]</th><th>Temp [C]</th><th>Humid [%]</th></tr>)";
 char *table_page_end = R"(</table></body></html>)";

@@ -32,19 +32,40 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define MEAS_TX_BUFF_LENGTH 17
-#define DATA_FRAME_LENGTH 32
+#define MEAS_TX_BUFF_LENGTH 20
+#define DATA_FRAME_LENGTH 30
+#define DATA_FRAME_PER_PAGE 4
 
-#define MEAS_VARS_NUM 3
+#define MEAS_VARS_NUM 4
 #define DATA_FRAME_VARS_NUM 8
 #define TABLE_PAGE_MEAS_NUM 15
 
-#define HTML_TABLE_MEAS_ROW_LEN 110
+#define HTML_TABLE_MEAS_ROW_LEN 104
+
+#define FLASH_WRITE_DATA_FRAME_NUM_CHECK 0x800F000
+#define FLASH_WRITE_DATA_FRAME_NUM_ADDR 0x800F400
+
+#define FLASH_WRITE_LAST_EEPROM_PAGE_DATA_CHECK 0x800F800
+#define FLASH_WRITE_LAST_EEPROM_PAGE_DATA_ADDR 0x800FC00
+
+#define FLASH_WORD_LENGTH 4
+
+#define UART_PASS_LEN 15
+#define UART_CMD_LEN 7
+#define UART_TX_BUFF_LEN 64
+#define UART_RX_BUFF_LEN 64
 
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+struct EEPROM_struct {
+	uint32_t curDataFrameNum;
+	uint32_t curPageNum;
+
+	char txBuff[128 + 1]; // size is equal to page size, because writing to EEPROM by one page
+	char rxBuff[DATA_FRAME_LENGTH + 1]; // size is equal to data frame size
+};
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -100,7 +121,7 @@ void Error_Handler(void);
 #define EEPROM_SDA_Pin GPIO_PIN_7
 #define EEPROM_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-void getMeasTablePageFromEEPROM(char *htmlTable, uint16_t startDataFrame, uint8_t dataFramesNum);
+void getMeasTableRowFromEEPROM(char *htmlTable, uint16_t startDataFrame);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
