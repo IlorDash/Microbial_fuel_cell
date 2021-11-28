@@ -34,7 +34,16 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define STR_COMMON_LENGTH 10
-#define MEAS_TX_BUFF_LENGTH 17
+#define MEAS_TX_BUFF_LENGTH 20
+
+/******************************************************************************/
+
+/******************************************************************************/
+#define SENSOR_ID 2
+/******************************************************************************/
+
+/******************************************************************************/
+#define AVERAGE_MEAS_NUM 6
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -121,10 +130,12 @@ char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +270 85  f";
 
 struct
 {
-	uint16_t co2;
+	uint32_t co2;
 	int16_t temp;
-	uint8_t humid;
+	uint16_t humid;
 } currentMeas;
+
+float result[3] = {0};
 /* USER CODE END 0 */
 
 /**
@@ -144,39 +155,6 @@ int main(void)
 	/* System interrupt init*/
 
 	/* USER CODE BEGIN Init */
-
-	/* USER CODE END Init */
-
-	/* Configure the system clock */
-	SystemClock_Config();
-
-	/* USER CODE BEGIN SysInit */
-	/* USER CODE END SysInit */
-
-	/* Initialize all configured peripherals */
-
-	// MX_USART2_UART_Init();
-	/* USER CODE BEGIN 2 */
-
-	GPIOA->ODR = 0;
-	GPIOB->ODR = 0;
-	HAL_SPI_DeInit(&hspi1);
-	// HAL_I2C_DeInit(&hi2c1);
-	//  HAL_UART_DeInit(&huart2);
-
-	HAL_SuspendTick();
-	HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-	HAL_ResumeTick();
-	SystemClock_Config(); // рестартуем системный клок
-
-	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-	MX_GPIO_Init();
-	// MX_I2C1_Init();
-	MX_SPI1_Init();
-	// MX_USART2_UART_Init();
-
-	// scd30.initialize(hi2c1);
-
 	SX1278_hw_t SX1278_pins;
 
 	SX1278_pins.dio0.pin = LORA_DIO0_Pin;
@@ -189,36 +167,124 @@ int main(void)
 
 	SX1278.hw = &SX1278_pins;
 
-	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+	/* USER CODE END Init */
+
+	/* Configure the system clock */
+	SystemClock_Config();
+
+	/* USER CODE BEGIN SysInit */
+	MX_I2C1_Init();
+	MX_SPI1_Init();
+	/* USER CODE END SysInit */
+	MX_GPIO_Init();
+	if (HAL_GPIO_ReadPin(POWER_GOOD_GPIO_Port, POWER_GOOD_Pin))
+	{
+		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
+		scd30.initialize(hi2c1);
+		HAL_Delay(5000);
+
+		while (!scd30.isAvailable())
+		{
+		}
+		SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+		char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
+		scd30.getCarbonDioxideConcentration(result); //
+		currentMeas.co2 = (uint16_t)result[0];
+		currentMeas.temp = (int16_t)(result[1] * 10);
+		currentMeas.humid = (int8_t)result[2];
+		currentMeas.co2 = 0;
+		currentMeas.humid = 0;
+		currentMeas.temp = 0;
+		for (int i = 0; i < AVERAGE_MEAS_NUM; i++)
+		{
+			scd30.getCarbonDioxideConcentration(result); //
+			currentMeas.co2 += (uint16_t)result[0];
+			currentMeas.temp += (int16_t)(result[1] * 10);
+			currentMeas.humid += (int8_t)result[2];
+			HAL_Delay(4000);
+		}
+
+		currentMeas.co2 /= AVERAGE_MEAS_NUM;
+		currentMeas.humid /= AVERAGE_MEAS_NUM;
+		currentMeas.temp /= AVERAGE_MEAS_NUM;
+
+		txBuff[0] = 's';
+		strcat(txBuff, IntToStr(SENSOR_ID, 3, false));
+		strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
+		strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
+		strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
+		txBuff[MEAS_TX_BUFF_LENGTH - 1] = 'f';
+		loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
+	}
+
+	/* Initialize all configured peripherals */
+
+	/* USER CODE BEGIN 2 */
+
+	GPIOA->ODR = 0;
+	GPIOB->ODR = 0;
+	HAL_SPI_DeInit(&hspi1);
+	HAL_I2C_DeInit(&hi2c1);
+
+	HAL_SuspendTick();
+	HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	HAL_ResumeTick();
+	SystemClock_Config(); // рестартуем системный клок
+
+	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
+	MX_GPIO_Init();
+	MX_I2C1_Init();
+	MX_SPI1_Init();
+
+	scd30.initialize(hi2c1);
+	HAL_Delay(2000);
 
 	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		// float result[3] = {0};
+		bool isTransmit = 0;
 		/* USER CODE END WHILE */
-		/*if (scd30.isAvailable())
+		if (scd30.isAvailable())
 		{
-			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+			SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 			char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
-			scd30.getCarbonDioxideConcentration(result); //
-			currentMeas.co2 = (uint16_t)result[0];
-			currentMeas.temp = (int16_t)(result[1] * 10);
-			currentMeas.humid = (int8_t)result[2];
+			currentMeas.co2 = 0;
+			currentMeas.humid = 0;
+			currentMeas.temp = 0;
+			for (int i = 0; i < AVERAGE_MEAS_NUM; i++)
+			{
+				scd30.getCarbonDioxideConcentration(result); //
+				currentMeas.co2 += (uint16_t)result[0];
+				currentMeas.temp += (int16_t)(result[1] * 10);
+				currentMeas.humid += (int8_t)result[2];
+				HAL_Delay(4000);
+			}
+
+			currentMeas.co2 /= AVERAGE_MEAS_NUM;
+			currentMeas.humid /= AVERAGE_MEAS_NUM;
+			currentMeas.temp /= AVERAGE_MEAS_NUM;
 
 			txBuff[0] = 's';
 			strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
 			strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
 			strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
 			txBuff[16] = 'f';
-
+			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
 			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-		}*/
-
-		loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
-		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-
+			isTransmit = 1;
+		}
+		else
+		{
+			SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+			memset(txBuff, 0, strlen(txBuff));
+			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
+		}
+		// loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+		// loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET); // turn off the load
 		// UART_txBuff = "i'm goint to sleep!\r\n";
 		// HAL_UART_Transmit(&huart2, (uint8_t *)UART_txBuff, strlen(UART_txBuff), 1000);
@@ -226,23 +292,27 @@ int main(void)
 		GPIOA->ODR = 0;
 		GPIOB->ODR = 0;
 		HAL_SPI_DeInit(&hspi1);
-		// HAL_I2C_DeInit(&hi2c1);
-		//  HAL_UART_DeInit(&huart2);
+		HAL_I2C_DeInit(&hi2c1);
 
 		HAL_Delay(100); // wait between enabling
+		if (isTransmit)
+		{
+			HAL_Delay(10000);
+		}
+
 		HAL_SuspendTick();
 		HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 		HAL_ResumeTick();
 		SystemClock_Config(); // рестартуем системный клок
 		HAL_Delay(100);
 
-		// MX_I2C1_Init();
+		MX_I2C1_Init();
 		MX_SPI1_Init();
-		// MX_USART2_UART_Init();
 		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-		SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
-		HAL_Delay(100); // wait for scd 30 waking up
-						/* USER CODE BEGIN 3 */
+
+		scd30.initialize(hi2c1);
+		HAL_Delay(4000); // wait for scd 30 waking up
+						 /* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
 }
