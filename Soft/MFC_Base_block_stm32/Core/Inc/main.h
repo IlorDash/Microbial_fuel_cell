@@ -63,7 +63,7 @@ struct EEPROM_struct {
 	uint32_t curDataFrameNum;
 	uint32_t curPageNum;
 
-	char txBuff[128 + 1]; // size is equal to page size, because writing to EEPROM by one page
+	char txBuff[128 + 1];				// size is equal to page size, because writing to EEPROM by one page
 	char rxBuff[DATA_FRAME_LENGTH + 1]; // size is equal to data frame size
 };
 /* USER CODE END ET */

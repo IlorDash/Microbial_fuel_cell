@@ -26,6 +26,7 @@
 #include "extEEPROM.h"
 #include <stdio.h>
 #include <string.h>
+#include "RTC_handler.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -84,17 +85,6 @@ bool executeCmd();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static uint16_t defaultYear = 21;
-static uint8_t defaultMonth = 10;
-static uint16_t defaultDate = 30;
-static uint8_t defaultWeekday = 1;
-
-static uint8_t defaultHours = 12;
-static uint8_t defaultMinutes = 0;
-static uint8_t defaultSeconds = 0;
-
-RTC_TimeTypeDef sTime;
-RTC_DateTypeDef sDate;
 
 typedef struct {
 	uint8_t sensorID;
@@ -127,11 +117,12 @@ const char *UART_pass = "BaseBlock271828";
 const char *UART_rstDataCmd = "RstData";
 const char *UART_setTimeCmd = "SetTime";
 
-/*************************************************************************************/
+/****************************************************************************************/
 /*UART commands example*/
 /*BaseBlock271828 RstData - reseting collected in EEPROM data*/
-/*BaseBlock271828 SetTime 12 35 5 1 21 - setting current time in format HH MM DD MM YY CRLF*/
-/*("\r\n") - sign of end transmition*/
+/*BaseBlock271828 SetTime 12 35 5 1 21 - setting current time in format HH MM DD MM YYYY*/
+/*CRLF ("\r\n") - sign of end transmition*/
+/****************************************************************************************/
 
 // char *measTestDump[] = {
 // 	"1    10 9  10 5  42424+272 85",
@@ -211,13 +202,6 @@ int main(void) {
 	MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
 
-	//*************************************
-	// HAL_RTC_SetDate()		//write func to set actual time via UART
-	// set_time(defaultHours, defaultMinutes, defaultSeconds, defaultWeekday, defaultMonth, defaultDate, defaultYear);
-	//*************************************
-
-	// resetFlashData();
-
 	if (!*(__IO uint32_t *)(FLASH_WRITE_DATA_FRAME_NUM_CHECK)) {
 		EEPROM_data.curDataFrameNum = *(__IO uint32_t *)(FLASH_WRITE_DATA_FRAME_NUM_ADDR);
 		EEPROM_data.curPageNum = EEPROM_data.curDataFrameNum / DATA_FRAME_PER_PAGE;
@@ -279,14 +263,13 @@ int main(void) {
 
 			HAL_GPIO_WritePin(LORA_TX_GPIO_Port, LORA_TX_Pin, GPIO_PIN_SET);
 
-			HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-			HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+			RTC_DateTimeTypeDef currentDateTime;
+			RTC_GetDateTime(&currentDateTime);
+			dataFrame.Date = currentDateTime.Date;
+			dataFrame.Month = currentDateTime.Month;
 
-			dataFrame.Date = sDate.Date;
-			dataFrame.Month = sDate.Month;
-
-			dataFrame.Hour = sTime.Hours;
-			dataFrame.Minute = sTime.Minutes;
+			dataFrame.Hour = currentDateTime.Hours;
+			dataFrame.Minute = currentDateTime.Minutes;
 
 			SX1278_read(&SX1278, (uint8_t *)LoRaRxBuff, loraStatus);
 
@@ -302,8 +285,8 @@ int main(void) {
 				dataFrame.temp = tTemp;
 				dataFrame.humid = tHumid;
 
-				sprintf(UartTxBuff, "#%02d Min:%02d Hour:%0d Date:%02d Month:%02d CO2:%-5d TEMP:%+-3d HUMID:%3d\r\n", dataFrame.sensorID, dataFrame.Minute,
-						dataFrame.Hour, dataFrame.Date, dataFrame.Month, dataFrame.co2, dataFrame.temp, dataFrame.humid);
+				sprintf(UartTxBuff, "#%02d Hour:%02d Min:%02d Date:%02d Month:%02d CO2:%-5d TEMP:%+-3d HUMID:%3d\r\n", dataFrame.sensorID, dataFrame.Hour,
+						dataFrame.Minute, dataFrame.Date, dataFrame.Month, dataFrame.co2, dataFrame.temp, dataFrame.humid);
 				HAL_UART_Transmit(&huart1, (uint8_t *)UartTxBuff, strlen(UartTxBuff), 1000);
 
 				sprintf(EEPROM_data.txBuff + EEPROM_data.curDataFrameNum % DATA_FRAME_PER_PAGE * DATA_FRAME_LENGTH, "%-2d %-2d %-2d %-2d %-2d %-5d %+-3d %3d",
@@ -373,7 +356,6 @@ void getMeasTableRowFromEEPROM(char *htmlTable, uint16_t startDataFrame) {
 		while (1) {
 		}
 	}
-	// strcpy(EEPROM_data.rxBuff, measTestDump[i]);
 
 	int tsensorID = 0;
 	int tMinute = 0;
@@ -394,29 +376,9 @@ void getMeasTableRowFromEEPROM(char *htmlTable, uint16_t startDataFrame) {
 		}
 	}
 	char rowBuff[HTML_TABLE_MEAS_ROW_LEN + 1] = "0";
-	sprintf(rowBuff, "<tr><td>%-2d</td><td>%-2d</td><td>%-2d</td><td>%-2d</td><td>%-2d</td><td>%-5d</td><td>%+-2d.%1d</td><td>%-3d</td></tr>", tsensorID,
-			tMinute, tHour, tDate, tMonth, tCO2, tTempInt, tTempFract, tHumid);
+	sprintf(rowBuff, "<tr><td>%02d</td><td>%02d</td><td>%02d</td><td>%02d</td><td>%02d</td><td>%-5d</td><td>%+-2d.%1d</td><td>%-3d</td></tr>", tsensorID, tHour,
+			tMinute, tDate, tMonth, tCO2, tTempInt, tTempFract, tHumid);
 	strncat(htmlTable, rowBuff, strlen(rowBuff));
-}
-
-void set_time(uint8_t curHours, uint8_t curMinutes, uint8_t curSeconds, uint8_t curWeekday, uint8_t curMonth, uint8_t curDate, uint16_t curYear) {
-	sTime.Hours = curHours;		// set hours
-	sTime.Minutes = curMinutes; // set minutes
-	sTime.Seconds = curSeconds; // set seconds
-	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
-		char *RTC_failedSetTimeMsg = "Failed to set time to RTC";
-		HAL_UART_Transmit(&huart1, (uint8_t *)RTC_failedSetTimeMsg, strlen(RTC_failedSetTimeMsg), 1000);
-		Error_Handler();
-	}
-	sDate.WeekDay = curWeekday; // week day
-	sDate.Month = curMonth;		// month
-	sDate.Date = curDate;		// date
-	sDate.Year = curYear;		// year
-	if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
-		char *RTC_failedSetTimeMsg = "Failed to set time to RTC";
-		HAL_UART_Transmit(&huart1, (uint8_t *)RTC_failedSetTimeMsg, strlen(RTC_failedSetTimeMsg), 1000);
-		Error_Handler();
-	}
 }
 
 void FLASH_Write(uint32_t dest, uint32_t *data, uint8_t wordsNum) {
@@ -487,12 +449,16 @@ bool executeCmd() {
 			int currentYear = 0;
 			UartRxBuff[strlen(UartRxBuff) - 2] = 0;
 			int8_t parseResult
-				= sscanf(UartRxBuff + UART_PASS_LEN + UART_CMD_LEN + 2, "%2d %2d %2d %2d %2d", &currentHour, &currentMinute, &currentDay, &currentMonth,
+				= sscanf(UartRxBuff + UART_PASS_LEN + UART_CMD_LEN + 2, "%2d %2d %2d %2d %4d", &currentHour, &currentMinute, &currentDay, &currentMonth,
 						 &currentYear); // shift start of sscanf after password, cmd and 2 spaces
 			if (parseResult != 5) {
 				return false;
 			}
-			set_time(currentHour, currentMinute, defaultSeconds, defaultWeekday, currentMonth, currentDay, currentYear);
+			if (!RTC_SetTime(currentHour, currentMinute, currentDay, currentMonth, currentYear)) {
+				char *RTC_failedSetDateTimeMsg = "Failed to set date and time to RTC";
+				HAL_UART_Transmit(&huart1, (uint8_t *)RTC_failedSetDateTimeMsg, strlen(RTC_failedSetDateTimeMsg), 1000);
+				Error_Handler();
+			}
 			break;
 		}
 		case rstData: {
@@ -502,7 +468,9 @@ bool executeCmd() {
 		default:
 			break;
 	}
+	return true;
 }
+
 /**
  * @brief System Clock Configuration
  * @retval None
@@ -590,9 +558,6 @@ static void MX_RTC_Init(void) {
 
 	/* USER CODE END RTC_Init 0 */
 
-	RTC_TimeTypeDef sTime = {0};
-	RTC_DateTypeDef DateToUpdate = {0};
-
 	/* USER CODE BEGIN RTC_Init 1 */
 
 	/* USER CODE END RTC_Init 1 */
@@ -608,26 +573,6 @@ static void MX_RTC_Init(void) {
 	/* USER CODE BEGIN Check_RTC_BKUP */
 	/**Initialize RTC and set the Time and Date
 	 */
-
-	if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F2) {
-		if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
-			char *RTC_failedSetTimeMsg = "Failed to set time to RTC from backup register";
-			HAL_UART_Transmit(&huart1, (uint8_t *)RTC_failedSetTimeMsg, strlen(RTC_failedSetTimeMsg), 1000);
-			HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
-			while (1) {
-			}
-		}
-
-		if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
-			char *RTC_failedSetDataMsg = "Failed to set data to RTC from backup register";
-			HAL_UART_Transmit(&huart1, (uint8_t *)RTC_failedSetDataMsg, strlen(RTC_failedSetDataMsg), 1000);
-			HAL_GPIO_WritePin(ERROR_GPIO_Port, ERROR_Pin, GPIO_PIN_SET);
-			while (1) {
-			}
-		}
-
-		HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
-	}
 	/* USER CODE END Check_RTC_BKUP */
 }
 
