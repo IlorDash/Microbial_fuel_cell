@@ -43,7 +43,7 @@
 /******************************************************************************/
 
 /******************************************************************************/
-#define AVERAGE_MEAS_NUM 6
+#define AVERAGE_MEAS_NUM 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,38 +69,30 @@ static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-char *IntToStr(int n, int space, bool setSign)
-{
+char *IntToStr(int n, int space, bool setSign) {
 	char str1[STR_COMMON_LENGTH] = {0}, str2[STR_COMMON_LENGTH] = {0}, t;
-	for (uint8_t i = 0; i < STR_COMMON_LENGTH; i++)
-	{
+	for (uint8_t i = 0; i < STR_COMMON_LENGTH; i++) {
 		str2[i] = ' ';
 	}
 	int i, k;
 	int sign = 0;
 	i = 0;
 	k = n;
-	if (k < 0)
-	{
+	if (k < 0) {
 		sign = 1;
 		k = -k;
 	}
-	do
-	{
+	do {
 		t = k % 10;
 		k = k / 10;
 		str1[i] = t | 0x30;
 		i++;
 	} while (k > 0);
-	if (setSign)
-	{
-		if (sign == 1)
-		{
+	if (setSign) {
+		if (sign == 1) {
 			str1[i] = '-';
 			i++;
-		}
-		else
-		{
+		} else {
 			str1[i] = '+';
 			i++;
 		}
@@ -108,8 +100,7 @@ char *IntToStr(int n, int space, bool setSign)
 
 	k = 0;
 	i--;
-	while (i >= 0)
-	{
+	while (i >= 0) {
 		str2[k] = str1[i];
 		i--;
 		k++;
@@ -128,8 +119,7 @@ uint8_t regData;
 char *UART_txBuff;
 char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +270 85  f";
 
-struct
-{
+struct {
 	uint32_t co2;
 	int16_t temp;
 	uint16_t humid;
@@ -142,8 +132,7 @@ float result[3] = {0};
  * @brief  The application entry point.
  * @retval int
  */
-int main(void)
-{
+int main(void) {
 	/* USER CODE BEGIN 1 */
 	/* USER CODE END 1 */
 
@@ -177,85 +166,32 @@ int main(void)
 	MX_SPI1_Init();
 	/* USER CODE END SysInit */
 	MX_GPIO_Init();
-	if (HAL_GPIO_ReadPin(POWER_GOOD_GPIO_Port, POWER_GOOD_Pin))
-	{
-		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-		scd30.initialize(hi2c1);
-		HAL_Delay(5000);
-
-		while (!scd30.isAvailable())
-		{
-		}
-		SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
-		char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
-		scd30.getCarbonDioxideConcentration(result); //
-		currentMeas.co2 = (uint16_t)result[0];
-		currentMeas.temp = (int16_t)(result[1] * 10);
-		currentMeas.humid = (int8_t)result[2];
-		currentMeas.co2 = 0;
-		currentMeas.humid = 0;
-		currentMeas.temp = 0;
-		for (int i = 0; i < AVERAGE_MEAS_NUM; i++)
-		{
-			scd30.getCarbonDioxideConcentration(result); //
-			currentMeas.co2 += (uint16_t)result[0];
-			currentMeas.temp += (int16_t)(result[1] * 10);
-			currentMeas.humid += (int8_t)result[2];
-			HAL_Delay(4000);
-		}
-
-		currentMeas.co2 /= AVERAGE_MEAS_NUM;
-		currentMeas.humid /= AVERAGE_MEAS_NUM;
-		currentMeas.temp /= AVERAGE_MEAS_NUM;
-
-		txBuff[0] = 's';
-		strcat(txBuff, IntToStr(SENSOR_ID, 3, false));
-		strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
-		strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
-		strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
-		txBuff[MEAS_TX_BUFF_LENGTH - 1] = 'f';
-		loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
-		loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-	}
-
 	/* Initialize all configured peripherals */
 
 	/* USER CODE BEGIN 2 */
 
-	GPIOA->ODR = 0;
-	GPIOB->ODR = 0;
-	HAL_SPI_DeInit(&hspi1);
-	HAL_I2C_DeInit(&hi2c1);
-
-	HAL_SuspendTick();
-	HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-	HAL_ResumeTick();
-	SystemClock_Config(); // рестартуем системный клок
-
-	HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-	MX_GPIO_Init();
-	MX_I2C1_Init();
-	MX_SPI1_Init();
-
-	scd30.initialize(hi2c1);
-	HAL_Delay(2000);
-
 	/* USER CODE END 2 */
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	while (1)
-	{
-		bool isTransmit = 0;
+	bool measAndTransmitDone = false;
+	while (1) {
 		/* USER CODE END WHILE */
-		if (scd30.isAvailable())
-		{
-			SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_20DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
+		if (HAL_GPIO_ReadPin(POWER_GOOD_GPIO_Port, POWER_GOOD_Pin) && (!measAndTransmitDone)) {
+			scd30.initialize(hi2c1);
+			HAL_Delay(5000);
+
+			while (!scd30.isAvailable()) {
+			}
+			SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 			char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
+			scd30.getCarbonDioxideConcentration(result); //
+			currentMeas.co2 = (uint16_t)result[0];
+			currentMeas.temp = (int16_t)(result[1] * 10);
+			currentMeas.humid = (int8_t)result[2];
 			currentMeas.co2 = 0;
 			currentMeas.humid = 0;
 			currentMeas.temp = 0;
-			for (int i = 0; i < AVERAGE_MEAS_NUM; i++)
-			{
+			for (int i = 0; i < AVERAGE_MEAS_NUM; i++) {
 				scd30.getCarbonDioxideConcentration(result); //
 				currentMeas.co2 += (uint16_t)result[0];
 				currentMeas.temp += (int16_t)(result[1] * 10);
@@ -268,51 +204,17 @@ int main(void)
 			currentMeas.temp /= AVERAGE_MEAS_NUM;
 
 			txBuff[0] = 's';
+			strcat(txBuff, IntToStr(SENSOR_ID, 3, false));
 			strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
 			strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
 			strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
-			txBuff[16] = 'f';
+			txBuff[MEAS_TX_BUFF_LENGTH - 1] = 'f';
 			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
+			HAL_Delay(100);
 			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-			isTransmit = 1;
+			measAndTransmitDone = true;
 		}
-		else
-		{
-			SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_11DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
-			memset(txBuff, 0, strlen(txBuff));
-			loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
-			loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-		}
-		// loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
-		// loraStatus = SX1278_LoRaTxPacket(&SX1278, (uint8_t *)txBuff, strlen(txBuff), 2000);
-		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_RESET); // turn off the load
-		// UART_txBuff = "i'm goint to sleep!\r\n";
-		// HAL_UART_Transmit(&huart2, (uint8_t *)UART_txBuff, strlen(UART_txBuff), 1000);
-
-		GPIOA->ODR = 0;
-		GPIOB->ODR = 0;
-		HAL_SPI_DeInit(&hspi1);
-		HAL_I2C_DeInit(&hi2c1);
-
-		HAL_Delay(100); // wait between enabling
-		if (isTransmit)
-		{
-			HAL_Delay(10000);
-		}
-
-		HAL_SuspendTick();
-		HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-		HAL_ResumeTick();
-		SystemClock_Config(); // рестартуем системный клок
-		HAL_Delay(100);
-
-		MX_I2C1_Init();
-		MX_SPI1_Init();
-		HAL_GPIO_WritePin(LOAD_SW_GPIO_Port, LOAD_SW_Pin, GPIO_PIN_SET); // turn on the load
-
-		scd30.initialize(hi2c1);
-		HAL_Delay(4000); // wait for scd 30 waking up
-						 /* USER CODE BEGIN 3 */
+		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
 }
@@ -321,8 +223,7 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void) {
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -340,8 +241,7 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_3;
 	RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_3;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-	{
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
 	}
 	/** Initializes the CPU, AHB and APB buses clocks
@@ -352,15 +252,13 @@ void SystemClock_Config(void)
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-	{
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
 		Error_Handler();
 	}
 	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2 | RCC_PERIPHCLK_I2C1;
 	PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
 	PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-	{
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
 		Error_Handler();
 	}
 }
@@ -370,8 +268,7 @@ void SystemClock_Config(void)
  * @param None
  * @retval None
  */
-static void MX_I2C1_Init(void)
-{
+static void MX_I2C1_Init(void) {
 
 	/* USER CODE BEGIN I2C1_Init 0 */
 
@@ -389,20 +286,17 @@ static void MX_I2C1_Init(void)
 	hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
 	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
 	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-	{
+	if (HAL_I2C_Init(&hi2c1) != HAL_OK) {
 		Error_Handler();
 	}
 	/** Configure Analogue filter
 	 */
-	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-	{
+	if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK) {
 		Error_Handler();
 	}
 	/** Configure Digital filter
 	 */
-	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-	{
+	if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN I2C1_Init 2 */
@@ -415,8 +309,7 @@ static void MX_I2C1_Init(void)
  * @param None
  * @retval None
  */
-static void MX_SPI1_Init(void)
-{
+static void MX_SPI1_Init(void) {
 
 	/* USER CODE BEGIN SPI1_Init 0 */
 
@@ -438,8 +331,7 @@ static void MX_SPI1_Init(void)
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 	hspi1.Init.CRCPolynomial = 7;
-	if (HAL_SPI_Init(&hspi1) != HAL_OK)
-	{
+	if (HAL_SPI_Init(&hspi1) != HAL_OK) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN SPI1_Init 2 */
@@ -452,8 +344,7 @@ static void MX_SPI1_Init(void)
  * @param None
  * @retval None
  */
-static void MX_USART2_UART_Init(void)
-{
+static void MX_USART2_UART_Init(void) {
 
 	/* USER CODE BEGIN USART2_Init 0 */
 
@@ -472,8 +363,7 @@ static void MX_USART2_UART_Init(void)
 	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
 	huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
 	huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-	if (HAL_HalfDuplex_Init(&huart2) != HAL_OK)
-	{
+	if (HAL_HalfDuplex_Init(&huart2) != HAL_OK) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN USART2_Init 2 */
@@ -486,8 +376,7 @@ static void MX_USART2_UART_Init(void)
  * @param None
  * @retval None
  */
-static void MX_GPIO_Init(void)
-{
+static void MX_GPIO_Init(void) {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	/* GPIO Ports Clock Enable */
@@ -534,13 +423,11 @@ static void MX_GPIO_Init(void)
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
 	/* USER CODE BEGIN Error_Handler_Debug */
 	/* User can add his own implementation to report the HAL error return state */
 	__disable_irq();
-	while (1)
-	{
+	while (1) {
 	}
 	/* USER CODE END Error_Handler_Debug */
 }
@@ -553,8 +440,7 @@ void Error_Handler(void)
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+void assert_failed(uint8_t *file, uint32_t line) {
 	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line number,
 	   ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
