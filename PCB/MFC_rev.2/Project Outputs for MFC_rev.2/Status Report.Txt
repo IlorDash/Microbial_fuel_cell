@@ -1,0 +1,12 @@
+Output: NC Drill Files
+Type  : NC Drill
+From  : Project [MFC_rev.2.PrjPcb]
+   Generated File[MFC.TXT]
+   Generated File[MFC.LDP]
+   Generated File[MFC.DRR]
+
+
+Files Generated   : 3
+Documents Printed : 0
+
+Finished Output Generation At 13:06:46 On 07.12.2021

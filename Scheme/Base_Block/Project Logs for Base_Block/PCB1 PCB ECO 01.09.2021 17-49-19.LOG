@@ -1,7 +1,0 @@
-Removed Pin From Net: NetName=NetFU1_1 Pin=XP1-1
-Removed Pin From Net: NetName=220V_N Pin=XP1-2
-Removed Member From Class: ClassName=Sheet2 Member=XP1
-Added Component: Designator=XT?(DG308-2.54-02P)
-Added Pin To Net: NetName=220V_N Pin=XT?-1
-Added Pin To Net: NetName=NetFU1_1 Pin=XT?-2
-Added Member To Class: ClassName=Sheet2 Member=Component XT? DG308-2.54-02P

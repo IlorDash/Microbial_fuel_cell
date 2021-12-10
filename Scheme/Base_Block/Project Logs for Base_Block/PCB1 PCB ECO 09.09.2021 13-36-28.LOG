@@ -1,8 +1,0 @@
-Added Pin To Net: NetName=GND Pin=ZQ1-2
-Added Pin To Net: NetName=GND Pin=ZQ1-4
-Added Pin To Net: NetName=NetDD2_5 Pin=DD2-5
-Added Pin To Net: NetName=NetDD2_5 Pin=ZQ1-3
-Added Net: Name=NetDD2_5
-Added Pin To Net: NetName=NetDD2_6 Pin=DD2-6
-Added Pin To Net: NetName=NetDD2_6 Pin=ZQ1-1
-Added Net: Name=NetDD2_6

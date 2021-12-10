@@ -1,0 +1,37 @@
+Change Component Comment : Designator=R1 Old Comment=10 ê New Comment=100 ê
+Added Component: Designator=HL1(LED_0603_GREEN)
+Added Component: Designator=R11(R_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Resistor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.bourns.com/pdfs/chpreztr.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Bourns Inc."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "CR0603-FX-3094ELF"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "3,09 M"; VariantName = "[No Variations]"
+Added Component: Designator=R12(R_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Resistor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://www.bourns.com/pdfs/chpreztr.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Bourns Inc."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "CR0603-FX-3094ELF"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "3,09 M"; VariantName = "[No Variations]"
+Added Component: Designator=VT1(SOT23)
+Added Component: Designator=VT2(SOT23)
+Added Pin To Net: NetName=2V2 Pin=D1-13
+Added Pin To Net: NetName=GND Pin=HL1-2
+Added Pin To Net: NetName=2V2 Pin=R11-1
+Added Pin To Net: NetName=2V2 Pin=VT1-2
+Added Pin To Net: NetName=NetDA1_11 Pin=VT2-1
+Added Pin To Net: NetName=GND Pin=VT2-2
+Added Pin To Net: NetName=2V2 Pin=XS1-1
+Change Net Name : Old Net Name=2V2 New Net Name=VDD_
+Added Pin To Net: NetName=NetHL1_1 Pin=HL1-1
+Added Pin To Net: NetName=NetHL1_1 Pin=R11-2
+Added Net: Name=NetHL1_1
+Added Pin To Net: NetName=NetR12_2 Pin=R12-2
+Added Pin To Net: NetName=NetR12_2 Pin=VT1-1
+Added Pin To Net: NetName=NetR12_2 Pin=VT2-3
+Added Net: Name=NetR12_2
+Added Pin To Net: NetName=VDD Pin=R12-1
+Added Pin To Net: NetName=VDD Pin=VT1-3
+Added Pin To Net: NetName=VDD Pin=X4-2
+Added Net: Name=VDD

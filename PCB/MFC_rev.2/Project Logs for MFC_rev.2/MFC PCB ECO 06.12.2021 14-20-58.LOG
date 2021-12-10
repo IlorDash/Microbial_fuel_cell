@@ -1,0 +1,31 @@
+Removed Pin From Net: NetName=NetC5_2 Pin=DA1-2
+Removed Pin From Net: NetName=NetC5_2 Pin=L1-1
+Removed Pin From Net: NetName=NetDA1_16 Pin=L1-2
+Added Component: Designator=C?(C_0603)
+Add component (AddParameter): Name = "Component Type"; Value = "Capasitor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "Datasheet"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM188R72A104MA35-01.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Murata Electronics"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "GRM188R72A104MA35D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "0.1µF"; VariantName = "[No Variations]"
+Added Component: Designator=L?(INDPM128128X800N)
+Add component (AddParameter): Name = "Arrow Part Number"; Value = "B82477G4223M000"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Arrow Price/Stock"; Value = "https://www.arrow.com/en/products/b82477g4223m000/epcos-tdk"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Datasheet Link"; Value = "https://product.tdk.com/system/files/dam/doc/product/inductor/inductor/smd/data_sheet/30/db/ind_2008/b82477g4.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Height"; Value = "8mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Name"; Value = "TDK"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Part_Number"; Value = "B82477G4223M000"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Part Number"; Value = ""; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Price/Stock"; Value = ""; VariantName = "[No Variations]"
+Added Component: Designator=X?(KT_2)
+Added Component: Designator=X?(KT_2)
+Added Pin To Net: NetName=NetC3_2 Pin=C?-1
+Added Pin To Net: NetName=GND Pin=C?-2
+Added Pin To Net: NetName=NetC5_2 Pin=L?-1
+Added Pin To Net: NetName=NetDA1_16 Pin=L?-2
+Added Pin To Net: NetName=NetC3_2 Pin=X1-1
+Added Pin To Net: NetName=GND Pin=X?-1
+Added Pin To Net: NetName=Vcc Pin=C4-1
+Added Pin To Net: NetName=Vcc Pin=DA1-14
+Added Pin To Net: NetName=Vcc Pin=X?-1
+Added Net: Name=Vcc

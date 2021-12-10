@@ -1,0 +1,11 @@
+Change Component Footprint: Designator=L? Old Footprint=INDPM128128X800N New Footprint=SRR4028220Y
+Change Component Comment : Designator=L? Old Comment=B82477G4223M000 New Comment=SRR4028-220Y
+Change component parameters: Designator = "L?" ("L?"); Footprint = "INDPM128128X800N"; UniqueID = "\CGVWFLSK\GKWSUESH" ("\CGVWFLSK\GKWSUESH")
+Change component parameters (AddParameter): Name = "Arrow Part Number"; Value = "SRR4028-220Y"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Arrow Price/Stock"; Value = "https://www.arrow.com/en/products/srr4028-220y/bourns"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Datasheet Link"; Value = "https://componentsearchengine.com/Datasheets/2/SRR4028-220Y.pdf"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Height"; Value = "3mm"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer_Name"; Value = "Bourns"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Manufacturer_Part_Number"; Value = "SRR4028-220Y"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Mouser Part Number"; Value = "652-SRR4028-220Y"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Mouser Price/Stock"; Value = "https://www.mouser.co.uk/ProductDetail/Bourns/SRR4028-220Y?qs=s%252BX%2FYkvGCpHgCkRmGbimqg%3D%3D"; VariantName = "[No Variations]"

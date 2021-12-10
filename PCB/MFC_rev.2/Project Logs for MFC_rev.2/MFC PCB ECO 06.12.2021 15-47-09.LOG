@@ -1,0 +1,42 @@
+Removed Pin From Net: NetName=Vcc Pin=C4-1
+Removed Pin From Net: NetName=Vcc Pin=X3-1
+Change Component Comment : Designator=R7 Old Comment=3,09 M New Comment=1,8Ì
+Change Component Comment : Designator=R4 Old Comment=3,09 M New Comment=5,1M
+Change Component Comment : Designator=R6 Old Comment=3,09 M New Comment=5,1M
+Change Component Comment : Designator=R10 Old Comment=3,09 M New Comment=5,1M
+Change Component Comment : Designator=R8 Old Comment=3,09 M New Comment=7,5M
+Change Component Comment : Designator=R5 Old Comment=3,09 M New Comment=7,5Ì
+Change Component Comment : Designator=R9 Old Comment=3,09 M New Comment=10M
+Change Component Comment : Designator=R2 Old Comment=10Ì New Comment=5,1Ì
+Added Component: Designator=DA1(VQFN-16)
+Add component (AddParameter): Name = "Arrow Part Number"; Value = "BQ25504RGTT"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Arrow Price/Stock"; Value = "https://www.arrow.com/en/products/bq25504rgtt/texas-instruments?region=nac"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Datasheet Link"; Value = "http://www.ti.com/general/docs/lit/getliterature.tsp?genericPartNumber=BQ25504&&fileType=pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Height"; Value = "1mm"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Name"; Value = "Texas Instruments"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer_Part_Number"; Value = "BQ25504RGTT"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Part Number"; Value = "595-BQ25504RGTT"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mouser Price/Stock"; Value = "https://www.mouser.co.uk/ProductDetail/Texas-Instruments/BQ25504RGTT?qs=LDM2r2BBpnbezhyy8cKCSA%3D%3D"; VariantName = "[No Variations]"
+Added Component: Designator=X4(Solder_jumper_3)
+Added Component: Designator=X5(KT_2)
+Added Pin To Net: NetName=GND Pin=DA1-1
+Added Pin To Net: NetName=NetDA1_3 Pin=DA1-3
+Added Pin To Net: NetName=NetC6_1 Pin=DA1-4
+Added Pin To Net: NetName=NetDA1_6 Pin=DA1-6
+Added Pin To Net: NetName=NetDA1_7 Pin=DA1-7
+Added Pin To Net: NetName=NetDA1_8 Pin=DA1-8
+Added Pin To Net: NetName=NetDA1_9 Pin=DA1-9
+Added Pin To Net: NetName=NetDA1_10 Pin=DA1-10
+Added Pin To Net: NetName=NetDA1_11 Pin=DA1-11
+Added Pin To Net: NetName=GND Pin=DA1-12
+Added Pin To Net: NetName=GND Pin=DA1-13
+Added Pin To Net: NetName=NetC3_2 Pin=DA1-15
+Added Pin To Net: NetName=NetDA1_16 Pin=DA1-16
+Added Pin To Net: NetName=Vcc Pin=X4-1
+Added Pin To Net: NetName=NetC3_2 Pin=X4-3
+Added Pin To Net: NetName=NetDA1_11 Pin=X5-1
+Added Pin To Net: NetName=NetC4_1 Pin=C4-1
+Added Pin To Net: NetName=NetC4_1 Pin=DA1-14
+Added Pin To Net: NetName=NetC4_1 Pin=X3-1
+Added Pin To Net: NetName=NetC4_1 Pin=X4-2
+Added Net: Name=NetC4_1

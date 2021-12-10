@@ -1,0 +1,4 @@
+Added Component: Designator=X1(KT_2)
+Added Component: Designator=X3(KT_2)
+Added Pin To Net: NetName=VDD Pin=X1-1
+Added Pin To Net: NetName=VDD_ Pin=X3-1

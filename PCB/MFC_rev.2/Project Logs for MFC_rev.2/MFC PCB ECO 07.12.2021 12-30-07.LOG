@@ -1,0 +1,12 @@
+Removed Pin From Net: NetName=NetDA1_11 Pin=DD1-10
+Removed Pin From Net: NetName=VDD_ Pin=VT1-2
+Removed Pin From Net: NetName=VDD Pin=VT1-3
+Removed Pin From Net: NetName=NetDA1_11 Pin=VT2-1
+Removed Pin From Net: NetName=GND Pin=VT2-2
+Removed Pin From Net: NetName=NetR12_2 Pin=VT2-3
+Added Component: Designator=VT?(SOT23)
+Added Pin To Net: NetName=VDD Pin=VT1-2
+Added Pin To Net: NetName=VDD_ Pin=VT1-3
+Added Pin To Net: NetName=NetDA1_11 Pin=VT?-1
+Added Pin To Net: NetName=GND Pin=VT?-2
+Added Pin To Net: NetName=NetR12_2 Pin=VT?-3
