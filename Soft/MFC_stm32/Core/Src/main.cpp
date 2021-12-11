@@ -40,10 +40,11 @@
 
 /******************************************************************************/
 #define SENSOR_ID 2
+#define AVERAGE_MEAS_NUM 2
 /******************************************************************************/
 
 /******************************************************************************/
-#define AVERAGE_MEAS_NUM 1
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -116,11 +117,11 @@ uint8_t regData;
 char *UART_txBuff;
 char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "s42424 +270 85  f";
 
-// struct {
-// 	uint32_t co2;
-// 	int16_t temp;
-// 	uint16_t humid;
-// } currentMeas;
+struct {
+	uint32_t co2;
+	int16_t temp;
+	uint16_t humid;
+} currentMeas;
 
 float result[3] = {0};
 /* USER CODE END 0 */
@@ -175,19 +176,26 @@ int main(void) {
 	SX1278_begin(&SX1278, SX1278_433MHZ, SX1278_POWER_17DBM, SX1278_LORA_SF_8, SX1278_LORA_BW_20_8KHZ, 10);
 	char txBuff[MEAS_TX_BUFF_LENGTH + 1] = "";
 
-	scd30.getCarbonDioxideConcentration(result); //
-	uint32_t SCD30_co2 = 0;
-	int16_t SCD30_temp = 0;
-	uint16_t SCD30_humid = 0;
-	SCD30_co2 = (uint16_t)result[0];
-	SCD30_temp = (int16_t)(result[1] * 10);
-	SCD30_humid = (int8_t)result[2];
+	currentMeas.co2 = 0;
+	currentMeas.humid = 0;
+	currentMeas.temp = 0;
+	for (int i = 0; i < AVERAGE_MEAS_NUM; i++) {
+		scd30.getCarbonDioxideConcentration(result); //
+		currentMeas.co2 += (uint16_t)result[0];
+		currentMeas.temp += (int16_t)(result[1] * 10);
+		currentMeas.humid += (int8_t)result[2];
+		HAL_Delay(4000);
+	}
+
+	currentMeas.co2 /= AVERAGE_MEAS_NUM;
+	currentMeas.humid /= AVERAGE_MEAS_NUM;
+	currentMeas.temp /= AVERAGE_MEAS_NUM;
 
 	txBuff[0] = 's';
 	strcat(txBuff, IntToStr(SENSOR_ID, 3, false));
-	strcat(txBuff, IntToStr(SCD30_co2, 6, false));
-	strcat(txBuff, IntToStr(SCD30_temp, 5, true));
-	strcat(txBuff, IntToStr(SCD30_humid, 4, false));
+	strcat(txBuff, IntToStr(currentMeas.co2, 6, false));
+	strcat(txBuff, IntToStr(currentMeas.temp, 5, true));
+	strcat(txBuff, IntToStr(currentMeas.humid, 4, false));
 	txBuff[MEAS_TX_BUFF_LENGTH - 1] = 'f';
 	loraStatus = SX1278_LoRaEntryTx(&SX1278, MEAS_TX_BUFF_LENGTH, 2000);
 	HAL_Delay(100);
